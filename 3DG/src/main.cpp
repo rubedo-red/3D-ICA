@@ -1,25 +1,7 @@
-/*
-	3D Graphics Start Point
-
-	I have tried to provide the minimum amount of code to get you started. The KeithHelpers file
-	provides some useful functions for loading and compiling shaders, loading files into strings etc.
-	Feel free to replace this with your own code if you prefer and please check it over to see what it does.
-
-	There are a number of libraries included:
-
-	GLFW: https://www.glfw.org/ - this provides a simple API for creating windows,
-	GLEW: http://glew.sourceforge.net/ - The OpenGL Extension Wrangler Library.
-	GLM: https://glm.g-truc.net/0.9.9/index.html - OpenGL Mathematics, a header only C++ mathematics library for graphics software.
-	FreeImage: http://freeimage.sourceforge.net/ - used to load image files
-	Assimp: https://www.assimp.org/ - A 3D model loader library
-	IMGUI: https://github.com/ocornut/imgui - a bloat-free graphical user interface library for C++
-
-	Jamie (September 2026)
-*/
-
-// Keith Helpers (I am keeping the name this year!) - also includes headers needed for the libraries used
 #include "Keith_Helpers.h"
-
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title);
 void Render(GLFWwindow* window);
@@ -27,11 +9,10 @@ void CreateRectangle();
 void CreateShaders();
 void DefineGUI();
 
-// Since this is a simple demo we will use some globals
-// A real program should use a class to encapsulate state
-GLuint gTriangleVAO{ 0 };
-GLuint gTriangleEBO{ 0 };
+GLuint gRectangleVAO{ 0 };
+GLuint gRectangleEBO{ 0 };
 GLuint gShaderProgram{ 0 };
+GLuint gTransformLoc{ 0 };
 
 int main()
 {
@@ -39,13 +20,12 @@ int main()
 	if (!window)
 		return -1;
 
-	// Ensure we can capture the escape key being pressed below
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
 	CreateRectangle();
 	CreateShaders();
 
-	// Enter main loop until the user closes the window
+
 	while (!glfwWindowShouldClose(window))
 	{
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -53,23 +33,20 @@ int main()
 
 		Render(window);
 
-		// GLFW updating - internally swaps the front and back buffers
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
 
-	// You should delete any OpenGL resources here
 	glDeleteProgram(gShaderProgram);
-	glDeleteVertexArrays(1, &gTriangleVAO);
+	glDeleteVertexArrays(1, &gRectangleVAO);
+	glDeleteBuffers(0, &gRectangleEBO);
 
-	// Clean up and exit
 	glfwDestroyWindow(window);
 	glfwTerminate();
 
 	return 0;
 }
 
-// Uses GLFW to set up a window via GLFW. Also initialises GLEW and OpenGL.
 GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 {
 	if (!glfwInit())
@@ -87,9 +64,9 @@ GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 	glfwWindowHint(GLFW_DEPTH_BITS, 24);
 	glfwWindowHint(GLFW_STENCIL_BITS, 8);
 	glfwWindowHint(GLFW_SAMPLES, 4); // 4x antialiasing
-	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); // We want OpenGL 4.6 minimum
+	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4); 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);	
-	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); // We don't want the old OpenGL 
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE); 
 
 	glEnable(GL_MULTISAMPLE);
 
@@ -106,21 +83,15 @@ GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 	}
 
 	glfwMakeContextCurrent(window);
-
 	glEnable(GL_MULTISAMPLE);
-
-	glewExperimental = true; // Needed in core profile
-
+	glewExperimental = true; 
 	std::cout << "GLFW window initialised" << std::endl;
 
 	GLenum err{ glewInit() };
 	if (GLEW_OK != err)
 	{
-		
 		auto errs = glewGetErrorString(err);
-
 		std::cout << "Failed to initialise GLEW, Error: " << errs << std::endl;
-
 		return nullptr;
 	}
 
@@ -141,17 +112,14 @@ GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 	}
 #endif
 
-	// Disable V-Sync for speed
+	// Disable V-Sync
 	glfwSwapInterval(0);
 
-	// Setup Dear ImGui
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
 	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
-	// Setup Dear ImGui style and Platform/Renderer bindings
 	ImGui::StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 460");
@@ -161,46 +129,48 @@ GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 	return window;
 }
 
+
+
 void CreateRectangle()
 {
-	static constexpr GLfloat vertices[] = {
-		0.5f, -0.5f, 0.0f, 1.f, 0.f, 0.f,
-		-0.5f, -0.5f, 0.0f, 0.f, 1.f, 0.f,
-		-0.5f, 0.5f, 0.0f, 0.f, 0.f, 1.f,
-		0.5f, 0.5f, 0.0f, 1.f, 1.f, 1.f
+	struct vec3 {
+		GLfloat x = 0.f;
+		GLfloat y = 0.f;
+		GLfloat z = 0.f;
+	};
+
+	static constexpr vec3 vertices[] = {
+		{0.5f, -0.5f, 0.0f}, {1.f, 0.f, 0.f},
+		{-0.5f, -0.5f, 0.0f}, {0.f, 1.f, 0.f},
+		{-0.5f, 0.5f, 0.0f}, {0.f, 0.f, 1.f},
+		{0.5f, 0.5f, 0.0f}, {1.f, 1.f, 1.f}
 	};
 
 	static constexpr GLuint indices[] = {
 		0, 1, 2,
-		0, 2, 3
+		0, 2, 3,
+		0, 1, 6,
 	};
-
-	// TODO: create a triangle
-	
-	// Remember the process for OpenGL objects:
-	// 1. Create the object id e.g. glGenBuffers(1, &bufferID);
-	// 2. Bind the object e.g. glBindBuffer(GL_ARRAY_BUFFER, bufferID);
-	// 3. Set any parameters e.g. glBufferData(GL_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
-	// 4. Unbind the object e.g. glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 	GLuint VBO;
 	glGenBuffers(1, &VBO);
 
-	glGenBuffers(1, &gTriangleEBO);
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gTriangleEBO);
+	glGenBuffers(1, &gRectangleEBO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gRectangleEBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	glGenVertexArrays(1, &gTriangleVAO);
-	glBindVertexArray(gTriangleVAO);
+	glGenVertexArrays(1, &gRectangleVAO);
+	glBindVertexArray(gRectangleVAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), (void*)0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 2*sizeof(vec3), (void*)0);
 	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6*sizeof(GLfloat), (void*)(3*sizeof(GLfloat)));
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 2*sizeof(vec3), (void*)(sizeof(vec3)));
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 }
 
 void CreateShaders()
@@ -208,62 +178,49 @@ void CreateShaders()
 	GLuint vertexShader = KeithHelpers::LoadAndCompileShader(GL_VERTEX_SHADER, "Data/Shaders/vertex_shader.vert");
 	GLuint fragmentShader = KeithHelpers::LoadAndCompileShader(GL_FRAGMENT_SHADER, "Data/Shaders/fragment_shader.frag");
 	gShaderProgram = glCreateProgram();
-
-	// Attach the vertex shader to this program (copies it)
 	glAttachShader(gShaderProgram, vertexShader);
-
-	// The attibute 0 maps to the input stream "vertex_position" in the vertex shader
-	// Not needed if you use (location=0) in the vertex shader itself
-	//glBindAttribLocation(gShaderProgram, 0, "vertex_position");
-	//glBindAttribLocation(gShaderProgram, 1, "vertex_color");
-
-	// Attach the fragment shader (copies it)
 	glAttachShader(gShaderProgram, fragmentShader);
 
-	// Done with the originals of these as we have made copies
+
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
+
 
 	KeithHelpers::LinkProgramShaders(gShaderProgram);
 }
 
 void Render(GLFWwindow* window)
 {
-	// Clear the screen each time
-	glClearColor(0.0f, 0.0f, 0.4f, 0.0f);
+	glClearColor(0.1f, 0.1f, 0.15f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT);	
 	
-	// Use the shader program
 	glUseProgram(gShaderProgram);
+	gTransformLoc = glGetUniformLocation(gShaderProgram, "transform");
+	glm::mat4 trans = glm::mat4(1.0f);
+	trans = glm::rotate(trans, (float)glfwGetTime()*1.f, glm::vec3(0,0,1));
+	glUniformMatrix4fv(gTransformLoc, 1, GL_FALSE, glm::value_ptr(trans));
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gTriangleEBO);
+	glBindVertexArray(gRectangleVAO);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, gRectangleEBO);
 	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+	glBindVertexArray(0);
 
-
-	// IMGUI	
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
 	ImGui::NewFrame();
 	DefineGUI();
 
-	// Rendering
 	ImGui::Render();
 	ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 }
 
 void DefineGUI()
 {
-	// Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	{
-		ImGui::Begin("3DG");                    // Create a window called "3GP" and append into it.
-
-		ImGui::Text("Visibility.");             // Display some text (you can use a format strings too)	
-
-	//	ImGui::Checkbox("Wireframe", &m_wireframe);	// A checkbox linked to a member variable
-
+		ImGui::Begin("3DG");
+		ImGui::Text("Visibility.");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-
 		ImGui::End();
 	}
 }
