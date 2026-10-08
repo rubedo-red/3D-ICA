@@ -21,9 +21,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="External\GLEW\glew.c">
       <Filter>External</Filter>
     </ClCompile>
@@ -48,7 +45,10 @@
     <ClCompile Include="External\IMGUI\imgui_widgets.cpp">
       <Filter>External</Filter>
     </ClCompile>
-    <ClCompile Include="Keith Helpers.cpp">
+    <ClCompile Include="src\Keith_Helpers.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -95,7 +95,7 @@
     <ClInclude Include="External\IMGUI\imstb_truetype.h">
       <Filter>External</Filter>
     </ClInclude>
-    <ClInclude Include="Keith Helpers.h">
+    <ClInclude Include="include\Keith_Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

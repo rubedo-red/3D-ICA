@@ -1,4 +1,5 @@
 *.swp
 3DG/build/*
 .vs/*
+x64/*
 3DG/x64/*

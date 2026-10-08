@@ -102,7 +102,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>IMGUI_IMPL_OPENGL_LOADER_GLEW;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>External\IMGUI;External\FREEIMAGE;External\ASSIMP\include;External\GLM;External\GLFW\include;External\GLEW</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>include;External\IMGUI;External\FREEIMAGE;External\ASSIMP\include;External\GLM;External\GLFW\include;External\GLEW</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -137,8 +137,8 @@
     <ClCompile Include="External\IMGUI\imgui_impl_win32.cpp" />
     <ClCompile Include="External\IMGUI\imgui_tables.cpp" />
     <ClCompile Include="External\IMGUI\imgui_widgets.cpp" />
-    <ClCompile Include="Keith Helpers.cpp" />
-    <ClCompile Include="main.cpp" />
+    <ClCompile Include="src\Keith_Helpers.cpp" />
+    <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="External\GLEW\eglew.h" />
@@ -155,7 +155,7 @@
     <ClInclude Include="External\IMGUI\imstb_rectpack.h" />
     <ClInclude Include="External\IMGUI\imstb_textedit.h" />
     <ClInclude Include="External\IMGUI\imstb_truetype.h" />
-    <ClInclude Include="Keith Helpers.h" />
+    <ClInclude Include="include\Keith_Helpers.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Data\Shaders\fragment_shader.frag" />
