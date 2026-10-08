@@ -1,0 +1,4 @@
+*.swp
+3DG/build/*
+.vs/*
+3DG/x64/*
