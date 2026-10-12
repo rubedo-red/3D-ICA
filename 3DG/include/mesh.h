@@ -16,23 +16,25 @@ public:
 
 private:
 	struct VertexData {
-		GLfloat x;
-		GLfloat y;
-		GLfloat z;
-		GLfloat nx;
-		GLfloat ny;
-		GLfloat nz;
-		GLfloat u;
-		GLfloat v;
+		GLfloat x{0.f};
+		GLfloat y{0.f};
+		GLfloat z{0.f};
+		GLfloat nx{0.f};
+		GLfloat ny{0.f};
+		GLfloat nz{0.f};
+		GLfloat u{0.f};
+		GLfloat v{0.f};
 	};
 
 	struct Submesh {
-		std::vector<VertexData> vertices;
-		std::vector<GLuint> indices;
+		size_t verts_begin{0};
+		size_t verts_count{0};
+		size_t indices_begin{0};
+		size_t indices_count{0};
 		const aiTexture *texture{nullptr};
 	};
 
-	void visit_node(const aiScene *scene, aiNode *sm, std::vector<Submesh>& list, aiMatrix4x4& p_trans, GLuint base_vert=0);
+	void visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans);
 
 	void create_buffers(
 		const VertexData *verts, const size_t num_verts, 

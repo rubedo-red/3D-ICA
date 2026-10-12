@@ -1,11 +1,13 @@
 #include "mesh.h"
 
-void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& list, aiMatrix4x4& p_trans, GLuint base_vert) {
+void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans) {
 	aiMatrix4x4 trans = p_trans * node->mTransformation;
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
-		std::cout << "mesh num " << i << std::endl;
+		GLuint base_vert = vertices.size();
 		GLuint next_base = base_vert;
 		Submesh s;
+		s.verts_begin = vertices.size();
+		s.indices_begin = indices.size();
 		aiMesh *m = scene->mMeshes[node->mMeshes[i]];
 		aiMaterial* material = scene->mMaterials[m->mMaterialIndex];
 		const bool has_text_coords = m->HasTextureCoords(0);
@@ -21,7 +23,7 @@ void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& 
 			next_base++;
 			VertexData v_data;
 			aiVector3D v = trans * (m->mVertices[j]);
-			aiVector3D n = (m->mNormals[j]);
+			aiVector3D n = trans * (m->mNormals[j]);
 			v_data.x = v.x;
 			v_data.y = v.y;
 			v_data.z = v.z;
@@ -33,47 +35,41 @@ void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& 
 				v_data.u = t.x;
 				v_data.v = t.y;
 			}
-			s.vertices.push_back(v_data);
+			vertices.push_back(v_data);
 		}
+		s.verts_count = next_base;
 		for (size_t j = 0; j < m->mNumFaces; j++) {
 			aiFace face = m->mFaces[j];
 			for (size_t ind = 0; ind < face.mNumIndices; ind++) {
-				s.indices.push_back(face.mIndices[ind]+base_vert);
+				s.indices_count++;
+				indices.push_back(face.mIndices[ind]+base_vert);
 			}
 		}
 		base_vert = next_base;
-		list.push_back(s);
+		submeshes.push_back(s);
 	}
 	for (size_t i = 0; i < node->mNumChildren; i++) {
-		visit_node(scene, node->mChildren[i], list, trans, base_vert);
+		visit_node(scene, node->mChildren[i], submeshes, vertices, indices, trans);
 	}
 }
 
 GLuint Mesh::create_gltexture(const aiTexture* texture) {
-	if (texture == nullptr) return 0;
-	if (texture->mHeight == 0 && texture->mWidth != 0) {
-		return 0;
-	}
 	return 0;
 }
 
 Mesh::Mesh(const aiScene *scene) {
-	std::vector<Submesh> submeshes;
 	aiMatrix4x4 trans;
-	visit_node(scene, scene->mRootNode, submeshes, trans);
+	std::vector<Submesh> submeshes;
 	std::vector<VertexData> verts;
-	std::vector<GLuint> idxs;
+	std::vector<GLuint> indices;
+	visit_node(scene, scene->mRootNode, submeshes, verts, indices, trans);
+	create_buffers(verts.data(), verts.size(), indices.data(), indices.size());
 	for (auto& s : submeshes) {
-		std::cout << "indices in submesh: " << s.indices.size() << std::endl;
-		std::cout << "verts in submesh: " << s.vertices.size() << std::endl;
-		verts.insert(verts.end(), s.vertices.begin(), s.vertices.end());
-		idxs.insert(idxs.end(), s.indices.begin(), s.indices.end());
 		textures.push_back({
-			s.indices.size(),
+			s.indices_count,
 			create_gltexture(s.texture)
 		});
 	}
-	create_buffers(verts.data(), verts.size(), idxs.data(), idxs.size());
 }
 
 Mesh::~Mesh() {
@@ -83,10 +79,10 @@ Mesh::~Mesh() {
 }
 
 void Mesh::render(glm::vec3 project) {
-	glBindVertexArray(VAO);
 	size_t current = 0;
+	glBindVertexArray(VAO);
 	for (auto& t : textures) {
-			glDrawElements(GL_TRIANGLES, t.first, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
+		glDrawElements(GL_TRIANGLES, t.first, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
 		current += t.first;
 	}
 	glBindVertexArray(0);

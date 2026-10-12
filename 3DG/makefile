@@ -1,7 +1,6 @@
 CXX = g++                                                                                                             
 
-CXXFLAGS = -I./include -Wall -Wextra $(shell pkg-config --cflags glfw3)
-CFLAGS = -I./include
+CXXFLAGS = -Iinclude -IExternal -Ibuild -Wall -Wextra -MMD -MP $(shell pkg-config --cflags glfw3)
 LIBS = $(shell pkg-config --libs glfw3) -lGL -lGLEW -lglm -lassimp -limgui
 
 SRC = $(wildcard src/*.cpp)
@@ -12,6 +11,8 @@ build/3d : $(OBJ)
 
 build/%.o : src/%.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ $(LIBS)
+
+-include $(OBJ:.o=.d)
 
 clean :
 	rm -f build/*
