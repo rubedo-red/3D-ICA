@@ -1,11 +1,10 @@
 #include "mesh.h"
 
-void Mesh::process_submesh(aiScene *scene, aiNode *node, std::vector<Submesh>& list, aiMatrix4x4 *p_trans) {
-	aiMatrix4x4 trans = (*p_trans) * node->mTransformation;
-	for (size_t i = 0; i < node->mNumChildren; i++) {
-		process_submesh(scene, node->mChildren[i], list, &trans);
-	}
+void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& list, aiMatrix4x4& p_trans, GLuint base_vert) {
+	aiMatrix4x4 trans = p_trans * node->mTransformation;
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
+		std::cout << "mesh num " << i << std::endl;
+		GLuint next_base = base_vert;
 		Submesh s;
 		aiMesh *m = scene->mMeshes[node->mMeshes[i]];
 		aiMaterial* material = scene->mMaterials[m->mMaterialIndex];
@@ -16,9 +15,10 @@ void Mesh::process_submesh(aiScene *scene, aiNode *node, std::vector<Submesh>& l
 			material->GetTexture(aiTextureType_BASE_COLOR, 0, &path);
 			if (const aiTexture* embedded = scene->GetEmbeddedTexture(path.C_Str())) {
 				s.texture = embedded;
-			}
-		}
+			} 
+		} 
 		for (size_t j = 0; j < m->mNumVertices; j++) {
+			next_base++;
 			VertexData v_data;
 			aiVector3D v = trans * (m->mVertices[j]);
 			aiVector3D n = (m->mNormals[j]);
@@ -38,20 +38,58 @@ void Mesh::process_submesh(aiScene *scene, aiNode *node, std::vector<Submesh>& l
 		for (size_t j = 0; j < m->mNumFaces; j++) {
 			aiFace face = m->mFaces[j];
 			for (size_t ind = 0; ind < face.mNumIndices; ind++) {
-				s.indices.push_back(face.mIndices[ind]);
+				s.indices.push_back(face.mIndices[ind]+base_vert);
 			}
 		}
+		base_vert = next_base;
 		list.push_back(s);
+	}
+	for (size_t i = 0; i < node->mNumChildren; i++) {
+		visit_node(scene, node->mChildren[i], list, trans, base_vert);
 	}
 }
 
-Mesh::Mesh(aiScene *scene) {
+GLuint Mesh::create_gltexture(const aiTexture* texture) {
+	if (texture == nullptr) return 0;
+	if (texture->mHeight == 0 && texture->mWidth != 0) {
+		return 0;
+	}
+	return 0;
+}
+
+Mesh::Mesh(const aiScene *scene) {
+	std::vector<Submesh> submeshes;
+	aiMatrix4x4 trans;
+	visit_node(scene, scene->mRootNode, submeshes, trans);
+	std::vector<VertexData> verts;
+	std::vector<GLuint> idxs;
+	for (auto& s : submeshes) {
+		std::cout << "indices in submesh: " << s.indices.size() << std::endl;
+		std::cout << "verts in submesh: " << s.vertices.size() << std::endl;
+		verts.insert(verts.end(), s.vertices.begin(), s.vertices.end());
+		idxs.insert(idxs.end(), s.indices.begin(), s.indices.end());
+		textures.push_back({
+			s.indices.size(),
+			create_gltexture(s.texture)
+		});
+	}
+	create_buffers(verts.data(), verts.size(), idxs.data(), idxs.size());
 }
 
 Mesh::~Mesh() {
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+	glDeleteVertexArrays(1, &VAO);
 }
 
 void Mesh::render(glm::vec3 project) {
+	glBindVertexArray(VAO);
+	size_t current = 0;
+	for (auto& t : textures) {
+			glDrawElements(GL_TRIANGLES, t.first, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
+		current += t.first;
+	}
+	glBindVertexArray(0);
 }
 
 void Mesh::create_buffers(
@@ -64,10 +102,10 @@ void Mesh::create_buffers(
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
-	glBufferData(GL_ARRAY_BUFFER, num_verts, verts, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, num_verts*sizeof(VertexData), verts, GL_STATIC_DRAW);
 
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices, indices, GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, num_indices*sizeof(GLuint), indices, GL_STATIC_DRAW);
 
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(VertexData), (void*)0);
 	glEnableVertexAttribArray(0);

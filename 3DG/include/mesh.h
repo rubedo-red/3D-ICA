@@ -4,10 +4,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
+#include <iostream>
+
 
 class Mesh {
 public:
-	Mesh(aiScene *scene);
+	Mesh(const aiScene *scene);
 	~Mesh();
 
 	void render(glm::vec3 project);
@@ -30,12 +32,14 @@ private:
 		const aiTexture *texture{nullptr};
 	};
 
-	void process_submesh(aiScene *scene, aiNode *sm, std::vector<Submesh>& list, aiMatrix4x4 *p_trans);
+	void visit_node(const aiScene *scene, aiNode *sm, std::vector<Submesh>& list, aiMatrix4x4& p_trans, GLuint base_vert=0);
 
 	void create_buffers(
 		const VertexData *verts, const size_t num_verts, 
 		const GLuint *indices, const size_t num_indices
 	);
+
+	GLuint create_gltexture(const aiTexture* texture);
 
 	GLuint VBO;
 	GLuint VAO;

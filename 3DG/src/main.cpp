@@ -2,9 +2,10 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include "mesh.h"
 
 GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title);
-void Render(GLFWwindow* window);
+void Render(GLFWwindow* window, Mesh& mesh);
 void CreateRectangle();
 void CreateShaders();
 void DefineGUI();
@@ -27,6 +28,14 @@ int main()
 
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile("Data/Models/Test/remilia.glb", aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	if (scene == nullptr) {
+		std::cout << "assimp error: " << importer.GetErrorString() << std::endl;
+		return 0;
+	};
+	Mesh m(scene);
+
 	CreateRectangle();
 	CreateShaders();
 
@@ -36,7 +45,7 @@ int main()
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 
-		Render(window);
+		Render(window, m);
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();
@@ -203,7 +212,7 @@ void CreateShaders()
 	KeithHelpers::LinkProgramShaders(gShaderProgram);
 }
 
-void Render(GLFWwindow* window)
+void Render(GLFWwindow* window, Mesh& mesh)
 {
 	glClearColor(0.1f, 0.1f, 0.15f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);	
@@ -218,9 +227,11 @@ void Render(GLFWwindow* window)
 	trans = glm::scale(trans, glm::vec3(scale_x, scale_y, scale_z));
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
 
-	glBindVertexArray(gRectangleVAO);
-	glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
-	glBindVertexArray(0);
+	//glBindVertexArray(gRectangleVAO);
+	//glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, 0);
+	//glBindVertexArray(0);
+	mesh.render({1.f, 1.f, 1.f});
+	
 
 	ImGui_ImplOpenGL3_NewFrame();
 	ImGui_ImplGlfw_NewFrame();
