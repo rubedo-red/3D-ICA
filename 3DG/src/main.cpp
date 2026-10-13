@@ -29,12 +29,12 @@ int main()
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile("Data/Models/Test/remilia.glb", aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	const aiScene* scene = importer.ReadFile("Data/Models/Mummy/mummy.x", aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 	if (scene == nullptr) {
 		std::cout << "assimp error: " << importer.GetErrorString() << std::endl;
 		return 0;
 	};
-	Mesh m(scene);
+	Mesh m(scene, "Data/Models/Mummy/mummy.bmp");
 
 	CreateRectangle();
 	CreateShaders();

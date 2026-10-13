@@ -5,16 +5,20 @@
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 #include <iostream>
+#include <string>
 
 
 class Mesh {
 public:
-	Mesh(const aiScene *scene);
+	Mesh(const aiScene *scene, std::string default_texture_override="");
 	~Mesh();
 
 	void render(glm::vec3 project);
 
 private:
+
+	inline static GLuint default_texture;
+
 	struct VertexData {
 		GLfloat x{0.f};
 		GLfloat y{0.f};
@@ -31,7 +35,7 @@ private:
 		size_t verts_count{0};
 		size_t indices_begin{0};
 		size_t indices_count{0};
-		const aiTexture *texture{nullptr};
+		std::string texture{""};
 	};
 
 	void visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans);
@@ -41,7 +45,7 @@ private:
 		const GLuint *indices, const size_t num_indices
 	);
 
-	GLuint create_gltexture(const aiTexture* texture);
+	GLuint create_gltexture(const aiScene *scene, std::string texture);
 
 	GLuint VBO;
 	GLuint VAO;

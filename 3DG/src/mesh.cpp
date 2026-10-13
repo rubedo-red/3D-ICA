@@ -1,4 +1,6 @@
 #include "mesh.h"
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb/stb_image.h"
 
 void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans) {
 	aiMatrix4x4 trans = p_trans * node->mTransformation;
@@ -15,9 +17,7 @@ void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& 
 		if (t_count > 0) {
 			aiString path;
 			material->GetTexture(aiTextureType_BASE_COLOR, 0, &path);
-			if (const aiTexture* embedded = scene->GetEmbeddedTexture(path.C_Str())) {
-				s.texture = embedded;
-			} 
+			s.texture = std::string(path.C_Str());
 		} 
 		for (size_t j = 0; j < m->mNumVertices; j++) {
 			next_base++;
@@ -53,11 +53,50 @@ void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& 
 	}
 }
 
-GLuint Mesh::create_gltexture(const aiTexture* texture) {
-	return 0;
+GLuint Mesh::create_gltexture(const aiScene *scene, std::string texture) {
+	if (default_texture == 0) {
+		stbi_set_flip_vertically_on_load(1);
+		static constexpr GLubyte default_texture_data[] = {
+			255, 255, 255
+		};
+		// this must live for the entire duration of the program, so we dont need to worry about deletion
+		glGenTextures(1, &default_texture);
+		glBindTexture(GL_TEXTURE_2D, default_texture);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, default_texture_data);
+	}
+	if (texture == "") {
+		return default_texture;
+	}
+	int width, height, channels;
+	GLuint* data{nullptr};
+	if (const aiTexture* embedded = scene->GetEmbeddedTexture(texture.c_str())) {
+		// if height is 0, embedded texture needs to be decoded
+		if (embedded->mHeight == 0) 
+			data = (GLuint*)stbi_load_from_memory((GLubyte*)embedded->pcData, embedded->mWidth, &width, &height, &channels, 4);
+		else {
+			data = (GLuint*)embedded->pcData;
+			width = embedded->mWidth;
+			height = embedded->mHeight;
+		}
+	} else {
+		data = (GLuint*)stbi_load(texture.c_str(), &width, &height, &channels, 4);
+	}
+	if (data == nullptr) {
+		// if image loading failed, use default texture instead
+		std::cout << stbi_failure_reason() << std::endl;
+		return create_gltexture(scene, "");
+	}
+	GLuint gltext;
+	glGenTextures(1, &gltext);
+	glBindTexture(GL_TEXTURE_2D, gltext);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+	glGenerateMipmap(GL_TEXTURE_2D);
+	glBindTexture(GL_TEXTURE_2D, 0);
+	stbi_image_free(data);
+	return gltext;
 }
 
-Mesh::Mesh(const aiScene *scene) {
+Mesh::Mesh(const aiScene *scene, std::string t_override) {
 	aiMatrix4x4 trans;
 	std::vector<Submesh> submeshes;
 	std::vector<VertexData> verts;
@@ -67,7 +106,7 @@ Mesh::Mesh(const aiScene *scene) {
 	for (auto& s : submeshes) {
 		textures.push_back({
 			s.indices_count,
-			create_gltexture(s.texture)
+			create_gltexture(scene, (s.texture == "" && t_override != "") ? t_override : s.texture)
 		});
 	}
 }
@@ -82,10 +121,12 @@ void Mesh::render(glm::vec3 project) {
 	size_t current = 0;
 	glBindVertexArray(VAO);
 	for (auto& t : textures) {
+		glBindTexture(GL_TEXTURE_2D, t.second);
 		glDrawElements(GL_TRIANGLES, t.first, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
 		current += t.first;
 	}
 	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Mesh::create_buffers(
