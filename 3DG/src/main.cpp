@@ -11,7 +11,7 @@ int main()
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
 	Mesh m("Data/Models/Test/satori.glb");
-	Renderer renderer = Renderer(window);
+	Renderer renderer = Renderer();
 
 	while (!glfwWindowShouldClose(window))
 	{
@@ -84,7 +84,16 @@ GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 	}
 
 	std::cout << "GLEW initialised" << std::endl;
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
 
+	ImGui::StyleColorsDark();
+	ImGui_ImplGlfw_InitForOpenGL(window, true);
+	ImGui_ImplOpenGL3_Init("#version 460");
+
+	std::cout << "IMGUI initialised" << std::endl;
 	return window;
 }
 

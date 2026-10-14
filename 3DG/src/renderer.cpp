@@ -1,8 +1,7 @@
 #include "renderer.h"
 
-Renderer::Renderer(GLFWwindow* window) {
+Renderer::Renderer() {
 	set_default_flags();
-	init_imgui(window);
 	create_mesh_shader();
 }
 
@@ -24,19 +23,6 @@ void Renderer::set_default_flags() {
 		glDebugMessageControl(GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE);
 	}
 #endif
-}
-
-void Renderer::init_imgui(GLFWwindow* window) {
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
-
-	ImGui::StyleColorsDark();
-	ImGui_ImplGlfw_InitForOpenGL(window, true);
-	ImGui_ImplOpenGL3_Init("#version 460");
-
-	std::cout << "IMGUI initialised" << std::endl;
 }
 
 void Renderer::create_mesh_shader() {

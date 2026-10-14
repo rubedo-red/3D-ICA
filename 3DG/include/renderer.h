@@ -7,7 +7,7 @@
 
 class Renderer {
 public:
-	Renderer(GLFWwindow* window);
+	Renderer();
 	~Renderer();
 
 	void clear();
@@ -17,6 +17,5 @@ private:
 	GLuint mesh_shader{0};
 
 	void set_default_flags();
-	void init_imgui(GLFWwindow* window);
 	void create_mesh_shader();
 };
