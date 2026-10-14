@@ -1,4 +1,7 @@
 #include "mesh.h"
+#include <algorithm>
+#include <unordered_map>
+
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
@@ -53,22 +56,20 @@ void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& 
 	}
 }
 
-GLuint Mesh::create_gltexture(const aiScene *scene, std::string texture) {
-	if (default_texture == 0) {
-		stbi_set_flip_vertically_on_load(1);
-		static constexpr GLubyte default_texture_data[] = {
-			255, 255, 255
-		};
-		// this must live for the entire duration of the program, so we dont need to worry about deletion
-		glGenTextures(1, &default_texture);
-		glBindTexture(GL_TEXTURE_2D, default_texture);
-		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, default_texture_data);
-	}
-	if (texture == "") {
-		return default_texture;
-	}
-	int width, height, channels;
+void Mesh::create_default_texture() {
+	stbi_set_flip_vertically_on_load(1);
+	static constexpr GLubyte default_texture_data[] = {
+		255, 255, 255
+	};
+	// this must live for the entire duration of the program, so we dont need to worry about deletion
+	glGenTextures(1, &default_texture);
+	glBindTexture(GL_TEXTURE_2D, default_texture);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, default_texture_data);
+}
+
+void Mesh::create_gltexture(const aiScene *scene, std::string texture, GLuint gltext) {
 	GLuint* data{nullptr};
+	int width, height, channels;
 	if (const aiTexture* embedded = scene->GetEmbeddedTexture(texture.c_str())) {
 		// if height is 0, embedded texture needs to be decoded
 		if (embedded->mHeight == 0) 
@@ -84,30 +85,53 @@ GLuint Mesh::create_gltexture(const aiScene *scene, std::string texture) {
 	if (data == nullptr) {
 		// if image loading failed, use default texture instead
 		std::cout << stbi_failure_reason() << std::endl;
-		return create_gltexture(scene, "");
+		return;
 	}
-	GLuint gltext;
-	glGenTextures(1, &gltext);
 	glBindTexture(GL_TEXTURE_2D, gltext);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
 	glGenerateMipmap(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D, 0);
 	stbi_image_free(data);
-	return gltext;
 }
 
-Mesh::Mesh(const aiScene *scene, std::string t_override) {
+Mesh::Mesh(std::string model_name, std::string t_override) {
+	if (default_texture==0) create_default_texture();
+	const bool has_override = (t_override != "");
+
+	Assimp::Importer importer;
+	const aiScene* scene = importer.ReadFile(model_name, aiProcess_MakeLeftHanded | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	if (scene == nullptr) {
+		std::cout << "assimp error: " << importer.GetErrorString() << std::endl;
+		return;
+	};
+
 	aiMatrix4x4 trans;
 	std::vector<Submesh> submeshes;
 	std::vector<VertexData> verts;
 	std::vector<GLuint> indices;
 	visit_node(scene, scene->mRootNode, submeshes, verts, indices, trans);
 	create_buffers(verts.data(), verts.size(), indices.data(), indices.size());
+
+	std::vector<std::string> unique_textures;
 	for (auto& s : submeshes) {
-		textures.push_back({
-			s.indices_count,
-			create_gltexture(scene, (s.texture == "" && t_override != "") ? t_override : s.texture)
-		});
+		if (has_override && s.texture=="") s.texture = t_override;
+		if (s.texture != "" && std::find(unique_textures.begin(), unique_textures.end(), s.texture) == unique_textures.end())
+			unique_textures.push_back(s.texture);
+	}
+	const size_t num_textures = unique_textures.size();
+	textures.resize(num_textures);
+	glGenTextures(num_textures, textures.data());
+
+	size_t i{0};
+	std::unordered_map<std::string, GLuint> name_handle_map;
+	for (auto& t: unique_textures) {
+		name_handle_map[t] = textures[i];
+		create_gltexture(scene, t, textures[i]);
+		++i;
+	}
+	for (auto& s : submeshes) {	
+		if (s.texture == "") submesh_textures.push_back({s.indices_count, default_texture });
+		else submesh_textures.push_back({s.indices_count, name_handle_map[s.texture]});
 	}
 }
 
@@ -115,18 +139,7 @@ Mesh::~Mesh() {
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &VAO);
-}
-
-void Mesh::render(glm::vec3 project) {
-	size_t current = 0;
-	glBindVertexArray(VAO);
-	for (auto& t : textures) {
-		glBindTexture(GL_TEXTURE_2D, t.second);
-		glDrawElements(GL_TRIANGLES, t.first, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
-		current += t.first;
-	}
-	glBindVertexArray(0);
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glDeleteTextures(textures.size(), textures.data());
 }
 
 void Mesh::create_buffers(

@@ -7,17 +7,24 @@
 #include <iostream>
 #include <string>
 
-
 class Mesh {
 public:
-	Mesh(const aiScene *scene, std::string default_texture_override="");
+	Mesh(std::string model_name, std::string default_texture_override="");
 	~Mesh();
 
-	void render(glm::vec3 project);
+	// public since they need to be accessed by the renderer, shouldn't be modified directly unless you really know what you're doing
+	GLuint VAO{0};
+	glm::mat4 transform{glm::mat4(1.f)};
+
+	std::vector<std::pair<size_t, GLuint>> submesh_textures;
 
 private:
+	GLuint VBO{0};
+	GLuint EBO{0};
+	std::vector<GLuint> textures;
 
-	inline static GLuint default_texture;
+	inline static GLuint default_texture{0};
+	void create_default_texture();
 
 	struct VertexData {
 		GLfloat x{0.f};
@@ -45,11 +52,5 @@ private:
 		const GLuint *indices, const size_t num_indices
 	);
 
-	GLuint create_gltexture(const aiScene *scene, std::string texture);
-
-	GLuint VBO;
-	GLuint VAO;
-	GLuint EBO;
-	glm::mat4 transform;
-	std::vector<std::pair<size_t, GLuint>> textures;
+	void create_gltexture(const aiScene *scene, std::string texture_name, GLuint texture_handle);
 };
