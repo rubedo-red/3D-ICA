@@ -99,7 +99,7 @@ Mesh::Mesh(std::string model_name, std::string t_override) {
 	const bool has_override = (t_override != "");
 
 	Assimp::Importer importer;
-	const aiScene* scene = importer.ReadFile(model_name, aiProcess_MakeLeftHanded | aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
+	const aiScene* scene = importer.ReadFile(model_name, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 	if (scene == nullptr) {
 		std::cout << "assimp error: " << importer.GetErrorString() << std::endl;
 		return;

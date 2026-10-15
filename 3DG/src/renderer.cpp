@@ -3,6 +3,7 @@
 Renderer::Renderer() {
 	set_default_flags();
 	create_mesh_shader();
+	set_projection(glm::radians(30.f), 1.f, 0.01f, 1000.f);
 }
 
 void Renderer::set_default_flags() {
@@ -38,15 +39,25 @@ void Renderer::create_mesh_shader() {
 	KeithHelpers::LinkProgramShaders(mesh_shader);
 }
 
+void Renderer::set_projection(float fov_y, float aspect, float near_dist, float far_dist) {
+	float fov_x = 2*glm::atan(aspect * glm::tan(fov_y/2));
+	projection_matrix = glm::mat4(
+		1.f/glm::tan(fov_x/2.f), 0.f, 0.f, 0.f,
+		0.f, 1.f/glm::tan(fov_y/2.f), 0.f, 0.f,
+		0.f, 0.f, -(far_dist+near_dist)/(far_dist-near_dist), -1.f,
+		0.f, 0.f, -2.f*(far_dist*near_dist)/(far_dist-near_dist), 0.f
+	);
+}
+
 void Renderer::clear() {
 	glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::render_mesh(Mesh& mesh) {
+void Renderer::render_mesh(const Mesh& mesh) {
 	glUseProgram(mesh_shader);
 	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
-	glm::mat4 trans = mesh.transform;
+	glm::mat4 trans = projection_matrix * view_matrix * mesh.transform;
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
 	size_t current = 0;
 	glBindVertexArray(mesh.VAO);
@@ -60,4 +71,5 @@ void Renderer::render_mesh(Mesh& mesh) {
 }
 
 Renderer::~Renderer() {
+	glDeleteProgram(mesh_shader);
 }

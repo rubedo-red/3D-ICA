@@ -10,13 +10,27 @@ int main()
 		return -1;
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-	Mesh m("Data/Models/Test/satori.glb");
+	Mesh m("Data/Models/Test/koishi.glb");
+	m.transform = glm::translate(m.transform, {0.f, -0.5f, -5.f});
+
 	Renderer renderer = Renderer();
 
 	while (!glfwWindowShouldClose(window))
 	{
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
+			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.05f, 0.f, 0.f});
+		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
+			renderer.view_matrix = glm::translate(renderer.view_matrix, {-0.05f, 0.f, 0.f});
+		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, 0.f, 0.05f});
+		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, 0.f, -0.05f});
+		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, -0.05f, 0.f});
+		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, 0.05f, 0.f});
 
 		renderer.clear();
 		renderer.render_mesh(m);
