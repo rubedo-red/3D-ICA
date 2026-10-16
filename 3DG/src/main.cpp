@@ -10,8 +10,9 @@ int main()
 		return -1;
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-	Mesh m("Data/Models/Test/koishi.glb");
+	Mesh m("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
 	m.transform = glm::translate(m.transform, {0.f, -0.5f, -5.f});
+	m.transform = glm::rotate(m.transform, 3.141592f, {0.f, 1.f, 0.f});
 
 	Renderer renderer = Renderer();
 
