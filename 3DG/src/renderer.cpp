@@ -3,7 +3,7 @@
 Renderer::Renderer() {
 	set_default_flags();
 	create_mesh_shader();
-	set_projection(glm::radians(30.f), 1.f, 0.01f, 1000.f);
+	set_projection(glm::radians(50.f), 1.f, 0.01f, 1000.f);
 }
 
 void Renderer::set_default_flags() {
@@ -50,11 +50,11 @@ void Renderer::set_projection(float fov_y, float aspect, float near_dist, float 
 }
 
 void Renderer::clear() {
-	glClearColor(0.1f, 0.1f, 0.15f, 1.0f);
+	glClearColor(0.1f, 0.1f, 0.15f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
-void Renderer::render_mesh(const Mesh& mesh) {
+void Renderer::render_mesh(const Mesh& mesh, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
 	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
 	glm::mat4 trans = projection_matrix * view_matrix * mesh.transform;

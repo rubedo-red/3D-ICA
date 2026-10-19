@@ -11,10 +11,9 @@ public:
 	~Renderer();
 
 	void clear();
-	void render_mesh(const Mesh& mesh);
+	void render_mesh(const Mesh& mesh, const glm::mat4& view_matrix);
 	void set_projection(float fov_y, float aspect, float near_dist, float far_dist);
 
-	glm::mat4 view_matrix{glm::mat4{1.f}};
 	glm::mat4 projection_matrix{glm::mat4{1.f}};
 
 private:

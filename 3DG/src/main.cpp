@@ -1,7 +1,14 @@
 #include "renderer.h"
+#include "camera.h"
+
+#include <algorithm>
 
 GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title);
 void DefineGUI();
+void resize_window(GLFWwindow* window, int width, int height);
+
+bool viewport_dirty{false};
+float aspect_ratio{1.f};
 
 int main()
 {
@@ -10,31 +17,67 @@ int main()
 		return -1;
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 
-	Mesh m("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
+	Mesh m("Data/Models/Test/satori.glb");
 	m.transform = glm::translate(m.transform, {0.f, -0.5f, -5.f});
-	m.transform = glm::rotate(m.transform, 3.141592f, {0.f, 1.f, 0.f});
+	Mesh m2("Data/Models/Test/koishi.glb");
+	m2.transform = glm::translate(m2.transform, {1.f, -0.5f, -5.f});
+	Mesh m3("Data/Models/Test/remilia.glb");
+	m3.transform = glm::translate(m3.transform, {-1.f, -0.5f, -5.f});
+	Mesh m4("Data/Models/Test/aya.glb");
+	m4.transform = glm::translate(m4.transform, {-2.f, -0.5f, -5.f});
+	Mesh m5("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
+	m5.transform = glm::translate(m5.transform, {-2.f, -0.5f, -7.f});
 
 	Renderer renderer = Renderer();
+	Camera camera;
+	bool camera_dirty = 0;
+	float camera_speed = 0.05;
 
 	while (!glfwWindowShouldClose(window))
 	{
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
-		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS)
-			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.05f, 0.f, 0.f});
+		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+			camera.pitch =  std::clamp(camera.pitch + 0.035f, -1.570796f, 1.570795f);
+			camera_dirty |= 1;
+		} 
+		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+			camera.pitch =  std::clamp(camera.pitch - 0.035f, -1.570796f, 1.570795f);
+			camera_dirty |= 1;
+		} 
+		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+			camera.yaw =  std::fmod(camera.yaw + 0.035f, 6.2831853f);
+			camera_dirty |= 1;
+		} 
+		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+			camera.yaw =  std::fmod(camera.yaw - 0.035f, 6.2831853f);
+			camera_dirty |= 1;
+		} 
+		if (camera_dirty)
+			camera.recalculate_movement_vectors();
+		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) 
+			camera.position += camera.right_vec * -camera_speed;
 		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-			renderer.view_matrix = glm::translate(renderer.view_matrix, {-0.05f, 0.f, 0.f});
+			camera.position += camera.right_vec * camera_speed;
 		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, 0.f, 0.05f});
+			camera.position += camera.forward_vec * -camera_speed;
 		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, 0.f, -0.05f});
+			camera.position += camera.forward_vec * camera_speed;
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, -0.05f, 0.f});
+			camera.position += camera.up_vec * camera_speed;
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			renderer.view_matrix = glm::translate(renderer.view_matrix, {0.f, 0.05f, 0.f});
+			camera.position += camera.up_vec * -camera_speed;
 
+		if (viewport_dirty) {
+			renderer.set_projection(glm::radians(50.f), aspect_ratio, 0.01f, 1000.f);
+			viewport_dirty = false;
+		}
 		renderer.clear();
-		renderer.render_mesh(m);
+		renderer.render_mesh(m, camera.calculate_view_matrix());
+		renderer.render_mesh(m2, camera.calculate_view_matrix());
+		renderer.render_mesh(m3, camera.calculate_view_matrix());
+		renderer.render_mesh(m4, camera.calculate_view_matrix());
+		renderer.render_mesh(m5, camera.calculate_view_matrix());
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -90,6 +133,8 @@ GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 	glewExperimental = true; 
 	std::cout << "GLFW window initialised" << std::endl;
 
+	glfwSetWindowSizeCallback(window, &resize_window);
+
 	GLenum err{ glewInit() };
 	if (GLEW_OK != err)
 	{
@@ -120,4 +165,10 @@ void DefineGUI()
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::End();
 	}
+}
+
+void resize_window(GLFWwindow* window, int width, int height) {
+	glViewport(0, 0, width, height);
+	aspect_ratio = (float)width / (float)height;
+	viewport_dirty = true;
 }
