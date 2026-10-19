@@ -1,5 +1,5 @@
 #include "renderer.h"
-#include "camera.h"
+#include "freecamera.h"
 
 #include <algorithm>
 
@@ -23,61 +23,58 @@ int main()
 	m2.transform = glm::translate(m2.transform, {1.f, -0.5f, -5.f});
 	Mesh m3("Data/Models/Test/remilia.glb");
 	m3.transform = glm::translate(m3.transform, {-1.f, -0.5f, -5.f});
-	Mesh m4("Data/Models/Test/aya.glb");
-	m4.transform = glm::translate(m4.transform, {-2.f, -0.5f, -5.f});
 	Mesh m5("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
 	m5.transform = glm::translate(m5.transform, {-2.f, -0.5f, -7.f});
+	m5.transform = glm::rotate(m5.transform, 3.141592f, {0.f, 1.f, 0.f});
 
 	Renderer renderer = Renderer();
-	Camera camera;
-	bool camera_dirty = 0;
-	float camera_speed = 0.05;
+	FreeCamera camera;
 
+	float prev_time = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
+		float dt = glfwGetTime() - prev_time;
+		prev_time = glfwGetTime();
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
 		if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
-			camera.pitch =  std::clamp(camera.pitch + 0.035f, -1.570796f, 1.570795f);
-			camera_dirty |= 1;
+			camera.rotate_pitch(false, dt);
 		} 
 		if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
-			camera.pitch =  std::clamp(camera.pitch - 0.035f, -1.570796f, 1.570795f);
-			camera_dirty |= 1;
+			camera.rotate_pitch(true, dt);
 		} 
 		if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-			camera.yaw =  std::fmod(camera.yaw + 0.035f, 6.2831853f);
-			camera_dirty |= 1;
+			camera.rotate_yaw(false, dt);
 		} 
 		if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-			camera.yaw =  std::fmod(camera.yaw - 0.035f, 6.2831853f);
-			camera_dirty |= 1;
+			camera.rotate_yaw(true, dt);
 		} 
-		if (camera_dirty)
+		if (camera.dirty_movement_vectors)
 			camera.recalculate_movement_vectors();
 		if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) 
-			camera.position += camera.right_vec * -camera_speed;
+			camera.move_right(true, dt);
 		if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS)
-			camera.position += camera.right_vec * camera_speed;
+			camera.move_right(false, dt);
 		if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
-			camera.position += camera.forward_vec * -camera_speed;
+			camera.move_forward(false, dt);
 		if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
-			camera.position += camera.forward_vec * camera_speed;
+			camera.move_forward(true, dt);
 		if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-			camera.position += camera.up_vec * camera_speed;
+			camera.move_up(false, dt);
 		if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-			camera.position += camera.up_vec * -camera_speed;
+			camera.move_up(true, dt);
 
 		if (viewport_dirty) {
 			renderer.set_projection(glm::radians(50.f), aspect_ratio, 0.01f, 1000.f);
 			viewport_dirty = false;
 		}
+		const glm::mat4 view_matrix = camera.camera.calculate_view_matrix();
+
 		renderer.clear();
-		renderer.render_mesh(m, camera.calculate_view_matrix());
-		renderer.render_mesh(m2, camera.calculate_view_matrix());
-		renderer.render_mesh(m3, camera.calculate_view_matrix());
-		renderer.render_mesh(m4, camera.calculate_view_matrix());
-		renderer.render_mesh(m5, camera.calculate_view_matrix());
+		renderer.render_mesh(m, view_matrix);
+		renderer.render_mesh(m2, view_matrix);
+		renderer.render_mesh(m3, view_matrix);
+		renderer.render_mesh(m5, view_matrix);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
