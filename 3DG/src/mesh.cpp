@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <unordered_map>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
 void Mesh::visit_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans) {
