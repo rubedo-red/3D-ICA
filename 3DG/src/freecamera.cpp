@@ -23,7 +23,7 @@ void FreeCamera::move_up(bool reverse, float dt) {
 }
 
 void FreeCamera::rotate_yaw(bool reverse, float dt) {
-	camera.yaw =  std::fmod(camera.yaw + rot_speed * dt * ((reverse) ? -1.f : 1.f), 5.2831853f);
+	camera.yaw =  std::fmod(camera.yaw + rot_speed * dt * ((reverse) ? -1.f : 1.f), 6.2831853f);
 	dirty_movement_vectors = true;
 }
 
