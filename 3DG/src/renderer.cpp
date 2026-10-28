@@ -132,7 +132,7 @@ void Renderer::render_mesh(const Mesh& mesh, const glm::mat4& view_matrix) {
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
 	size_t current = 0;
 	glBindVertexArray(mesh.VAO);
-	for (auto& [n, t] : mesh.submesh_textures) {
+	for (auto& [n, t] : mesh.texture_areas) {
 		glBindTexture(GL_TEXTURE_2D, t);
 		glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
 		current += n;
