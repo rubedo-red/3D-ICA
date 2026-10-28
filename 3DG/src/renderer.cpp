@@ -3,39 +3,6 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
-static constexpr GLfloat cube_verts[] = {
-	-1.f, 1.f, 1.f,
-	1.f, 1.f, 1.f,
-	-1.f, -1.f, 1.f,
-	1.f, -1.f, 1.f,
-
-	-1.f, 1.f, -1.f,
-	1.f, 1.f, -1.f,
-	-1.f, -1.f, -1.f,
-	1.f, -1.f, -1.f,
-};
-
-static constexpr GLuint skybox_indices[] = {
-	// back
-	0, 1, 2,
-	3, 2, 1,
-	// front
-	6, 5, 4,
-	5, 6, 7,
-	// top
-	4, 1, 0,
-	5, 1, 4,
-	// bottom
-	2, 3, 6,
-	7, 6, 3,
-	// left
-	0, 2, 4,
-	6, 4, 2,
-	// right
-	5, 3, 1,
-	3, 5, 7 
-};
-
 Renderer::Renderer() {
 	set_default_flags();
 	create_mesh_shader();

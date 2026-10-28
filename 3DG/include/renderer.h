@@ -4,7 +4,9 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include "mesh.h"
+#include "primitives.h"
 #include "skybox.h"
+
 
 class Renderer {
 public:

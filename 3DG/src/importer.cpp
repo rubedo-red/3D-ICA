@@ -38,7 +38,7 @@ Mesh model_to_mesh(const std::string& model, const std::string& default_override
 	visit_ai_node(scene, scene->mRootNode, submeshes, verts, indices, trans);
 
 	std::unordered_map<std::string, GLuint> textures_map;
-	std::vector<std::pair<size_t, GLuint>> texture_areas;
+	std::vector<std::pair<GLsizei, GLuint>> texture_areas;
 
 	const bool has_override = default_override != "";
 	for (auto& s : submeshes) { 
@@ -86,11 +86,11 @@ GLuint texture_from_ai(const aiScene *scene, std::string texture_name) {
 void visit_ai_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans) {
 	aiMatrix4x4 trans = p_trans * node->mTransformation;
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
-		GLuint base_vert = vertices.size();
+		GLuint base_vert = static_cast<GLsizei>(vertices.size());
 		GLuint next_base = base_vert;
 		Submesh s;
-		s.verts_begin = vertices.size();
-		s.indices_begin = indices.size();
+		s.verts_begin = static_cast<GLuint>(vertices.size());
+		s.indices_begin = static_cast<GLuint>(indices.size());
 		aiMesh *m = scene->mMeshes[node->mMeshes[i]];
 		aiMaterial* material = scene->mMaterials[m->mMaterialIndex];
 		const bool has_text_coords = m->HasTextureCoords(0);

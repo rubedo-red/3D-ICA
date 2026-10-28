@@ -20,14 +20,14 @@ struct VertexData {
 
 class Mesh {
 public:
-	Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<size_t, GLuint>>& texture_areas);
+	Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<GLsizei, GLuint>>& texture_areas);
 	~Mesh();
 
 	// public since they need to be accessed by the renderer, shouldn't be modified directly unless you really know what you're doing
 	GLuint VAO{0};
 	glm::mat4 transform{glm::mat4(1.f)};
 
-	std::vector<std::pair<size_t, GLuint>> texture_areas;
+	std::vector<std::pair<GLsizei, GLuint>> texture_areas;
 
 private:
 	GLuint VBO{0};

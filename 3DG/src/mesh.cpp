@@ -1,7 +1,7 @@
 #include "mesh.h"
 #include "stb/stb_image.h"
 
-Mesh::Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<size_t, GLuint>>& areas) {
+Mesh::Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<GLsizei, GLuint>>& areas) {
 
 	create_buffers(verts.data(), verts.size(), indices.data(), indices.size());
 	texture_areas = areas;
@@ -18,7 +18,7 @@ Mesh::~Mesh() {
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &VAO);
-	glDeleteTextures(textures.size(), textures.data());
+	glDeleteTextures(static_cast<GLsizei>(textures.size()), textures.data());
 }
 
 void Mesh::create_buffers(

@@ -53,10 +53,10 @@ int main()
 	Renderer renderer = Renderer();
 	FreeCamera camera;
 
-	float prev_time = glfwGetTime();
+	double prev_time = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
 	{
-		float dt = glfwGetTime() - prev_time;
+		float dt = static_cast<float>(glfwGetTime() - prev_time);
 		prev_time = glfwGetTime();
 		if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 			glfwSetWindowShouldClose(window, GLFW_TRUE);
