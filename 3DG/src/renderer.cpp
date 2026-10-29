@@ -99,7 +99,7 @@ void Renderer::render_mesh(const Mesh& mesh, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
 	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
 	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
-	glm::mat4 trans = projection_matrix * view_matrix * mesh.transform;
+	glm::mat4 trans = projection_matrix * view_matrix * mesh.transform.matrix();
 	glm::vec4 color = {1.f, 1.f, 1.f, 1.f};
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
 	glUniform4f(color_loc, color.r, color.g, color.b, color.a);
@@ -146,11 +146,11 @@ Renderer::~Renderer() {
 	glDeleteBuffers(1, &skybox_ebo);
 	glDeleteVertexArrays(1, &skybox_vao);
 }
-void Renderer::render_cube(const glm::mat4& transform, const glm::mat4& view_matrix) {
+void Renderer::render_cube(const Transform& transform, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
 	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
 	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
-	glm::mat4 trans = projection_matrix * view_matrix * transform;
+	glm::mat4 trans = projection_matrix * view_matrix * transform.matrix();
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
 	size_t current = 0;
 	glBindVertexArray(cube_primitive.VAO);

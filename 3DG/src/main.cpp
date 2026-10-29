@@ -22,27 +22,24 @@ int main()
 	Renderer renderer = Renderer();
 
 	Mesh m = model_to_mesh("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
-	m.transform = glm::translate(m.transform, {-0.4f, -0.5f, -5.f});
-	m.transform = glm::rotate(m.transform, 3.14159256f*1.5f, {0.f, 1.f, 0.f});
-	m.transform = glm::scale(m.transform, {0.4f, 0.4f, 0.4f});
+	m.transform.translate = {-0.4f, -0.5f, -5.f};
+	m.transform.yaw = 3.14159256f*1.5f;
+	m.transform.scale = {0.4f, 0.4f, 0.4f};
 
 	Mesh m2 = model_to_mesh("Data/Models/Jeep/jeep.obj", "Data/Models/Jeep/jeep_army.jpg");
-	m2.transform = glm::translate(m2.transform, {0.f, -0.5f, -5.f});
-	m2.transform = glm::scale(m2.transform, {0.004f, 0.004f, 0.004f});
+	m2.transform.translate = {0.f, -0.5f, -5.f};
+	m2.transform.scale = {0.004f, 0.004f, 0.004f};
 
 	Mesh m3 = model_to_mesh("Data/Models/Jeep/jeep.obj", "Data/Models/Jeep/jeep_rood.jpg");
-	m3.transform = glm::translate(m3.transform, {2.5f, 0.2f, -5.f});
-	m3.transform = glm::rotate(m3.transform, 3.14159256f*0.3f, {0.f, 1.f, 0.f});
-	m3.transform = glm::rotate(m3.transform, 3.14159256f*0.5f, {1.f, 0.f, 0.f});
-	m3.transform = glm::scale(m3.transform, {0.004f, 0.004f, 0.004f});
+	m3.transform.translate = {2.5f, 0.2f, -5.f};
+	m3.transform.pitch = 3.14159256f*-1.2f;
+	m3.transform.roll = 3.14159256f*0.5f;
+	m3.transform.yaw = 3.14159256f*0.5f;
+	m3.transform.scale = {0.004f, 0.004f, 0.004f};
 
-	//Mesh m4 = model_to_mesh("Data/Models/Test/satori.glb");
-	//m4.transform = glm::translate(m4.transform, {3.f, -0.2f, -4.f});
-	//m4.transform = glm::rotate(m4.transform, 3.14159256f*0.3f, {0.f, 1.f, 0.f});
-	//m4.transform = glm::rotate(m4.transform, 3.14159256f*0.5f, {1.f, 0.f, 0.f});
-
-	//Mesh m5 = model_to_mesh("Data/Models/Test/aya.glb");
-	//m5.transform = glm::translate(m5.transform, {1.5f, -0.5f, -2.f});
+	Transform cube;
+	cube.translate = {0.f, 1.f, -8.f};
+	cube.scale = {0.5f, 1.0f, 0.5f};
 
 	Skybox skybox(
 		"Data/Models/Sky/Clouds/SkyBox_Right.tga",
@@ -94,7 +91,8 @@ int main()
 		}
 		const glm::mat4 view_matrix = camera.camera.calculate_view_matrix();
 	
-		//m4.transform = glm::rotate(m4.transform, 3.14159256f*dt, {0.f, 1.f, 0.f});
+		cube.yaw += dt * 0.7f;
+		cube.pitch += dt * 0.2f;
 
 		renderer.clear();
 	
@@ -102,10 +100,8 @@ int main()
 		renderer.render_mesh(m, view_matrix);
 		renderer.render_mesh(m2, view_matrix);
 		renderer.render_mesh(m3, view_matrix);
-		//renderer.render_mesh(m4, view_matrix);
-		//renderer.render_mesh(m5, view_matrix);
 
-		renderer.render_cube(glm::mat4(1), view_matrix);
+		renderer.render_cube(cube, view_matrix);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();

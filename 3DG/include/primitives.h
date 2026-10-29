@@ -13,7 +13,8 @@ static constexpr glm::vec4 primitive_colors[] = {
 	{0.f, 0.f, 1.f, 1.f},
 	{1.f, 1.f, 0.f, 1.f},
 	{1.f, 0.f, 1.f, 1.f},
-	{0.f, 1.f, 1.f, 1.f}
+	{0.f, 1.f, 1.f, 1.f},
+	{0.f, 0.f, 0.f, 1.f}
 };
 
 static constexpr GLfloat cube_verts[] = {

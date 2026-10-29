@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include "Keith_Helpers.h"
+#include "transform.h"
 
 struct VertexData {
 	GLfloat x{0.f};
@@ -26,7 +27,7 @@ public:
 
 	// public since they need to be accessed by the renderer, shouldn't be modified directly unless you really know what you're doing
 	GLuint VAO{0};
-	glm::mat4 transform{glm::mat4(1.f)};
+	Transform transform;
 
 	std::vector<std::pair<GLsizei, GLuint>> texture_areas;
 
