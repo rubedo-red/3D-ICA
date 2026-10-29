@@ -122,3 +122,19 @@ void visit_ai_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& sub
 		visit_ai_node(scene, node->mChildren[i], submeshes, vertices, indices, trans);
 	}
 }
+
+Image load_image(std::string path) {
+	int width{0};
+	int height{0};
+	int channels{0};
+	uint8_t* data = (uint8_t*)stbi_load(path.c_str(), &width, &height, &channels, 4);
+	return {
+		.width = static_cast<size_t>(width),
+		.height = static_cast<size_t>(height),
+		.data = data
+	};
+}
+
+Image::~Image() {
+	if (data != nullptr) stbi_image_free(data);
+}

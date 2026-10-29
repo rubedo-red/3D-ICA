@@ -1,5 +1,6 @@
 #include "renderer.h"
 #include "importer.h"
+#include "terrain.h"
 #include "freecamera.h"
 
 #include <algorithm>
@@ -10,6 +11,8 @@ void resize_window(GLFWwindow* window, int width, int height);
 
 bool viewport_dirty{false};
 float aspect_ratio{1.f};
+
+bool is_wireframe{false};
 
 int main()
 {
@@ -36,6 +39,9 @@ int main()
 	m3.transform.roll = 3.14159256f*0.5f;
 	m3.transform.yaw = 3.14159256f*0.5f;
 	m3.transform.scale = {0.004f, 0.004f, 0.004f};
+
+	Mesh terrain = create_terrain_mesh("Data/Heightmaps/perlin.png", 98, 100, 0.2f, 4.f);
+	terrain.transform.translate = {0.f, -6.f, 0.f};
 
 	Transform cube;
 	cube.translate = {0.f, 1.f, -8.f};
@@ -94,12 +100,15 @@ int main()
 		cube.yaw += dt * 0.7f;
 		cube.pitch += dt * 0.2f;
 
+		renderer.set_wireframe(is_wireframe);
+
 		renderer.clear();
 	
 		renderer.render_skybox(skybox, view_matrix);
 		renderer.render_mesh(m, view_matrix);
 		renderer.render_mesh(m2, view_matrix);
 		renderer.render_mesh(m3, view_matrix);
+		renderer.render_mesh(terrain, view_matrix);
 
 		renderer.render_cube(cube, view_matrix);
 
@@ -186,6 +195,7 @@ void DefineGUI()
 	{
 		ImGui::Begin("3DG");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::Checkbox("Wireframe", &is_wireframe);
 		ImGui::End();
 	}
 }

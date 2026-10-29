@@ -14,6 +14,10 @@ Renderer::Renderer() :
 	set_projection(glm::radians(50.f), 1.f, 0.01f, 1000.f);
 }
 
+void Renderer::set_wireframe(bool enable) {
+	glPolygonMode(GL_FRONT_AND_BACK, enable ? GL_LINE : GL_FILL);
+}
+
 void Renderer::create_skybox() {
 	glGenVertexArrays(1, &skybox_vao);
 	glGenBuffers(1, &skybox_vbo);
@@ -91,7 +95,6 @@ void Renderer::set_projection(float fov_y, float aspect, float near_dist, float 
 }
 
 void Renderer::clear() {
-	//glClearColor(0.1f, 0.1f, 0.15f, 1.f);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 

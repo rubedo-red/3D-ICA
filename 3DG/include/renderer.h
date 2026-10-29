@@ -17,6 +17,7 @@ public:
 	void render_skybox(const Skybox& skybox, const glm::mat4& view_matrix);
 	void render_cube(const Transform& transform, const glm::mat4& view_matrix);
 	void set_projection(float fov_y, float aspect, float near_dist, float far_dist);
+	void set_wireframe(bool enable);
 
 	glm::mat4 projection_matrix{glm::mat4{1.f}};
 
