@@ -1,6 +1,20 @@
 #pragma once
 #include <vector>
-#include "Keith_Helpers.h"
+#include "mesh.h"
+
+inline GLuint default_texture{0};
+
+void create_default_texture();
+
+static constexpr glm::vec4 primitive_colors[] = {
+	{1.f, 1.f, 1.f, 1.f},
+	{1.f, 0.f, 0.f, 1.f},
+	{0.f, 1.f, 0.f, 1.f},
+	{0.f, 0.f, 1.f, 1.f},
+	{1.f, 1.f, 0.f, 1.f},
+	{1.f, 0.f, 1.f, 1.f},
+	{0.f, 1.f, 1.f, 1.f}
+};
 
 static constexpr GLfloat cube_verts[] = {
 	-1.f, 1.f, 1.f,
@@ -12,6 +26,18 @@ static constexpr GLfloat cube_verts[] = {
 	1.f, 1.f, -1.f,
 	-1.f, -1.f, -1.f,
 	1.f, -1.f, -1.f,
+};
+
+static constexpr VertexData cube_data[] = {
+	{-1.f, 1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{1.f, 1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{-1.f, -1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{1.f, -1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+
+	{-1.f, 1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{1.f, 1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{-1.f, -1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{1.f, -1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
 };
 
 static constexpr GLuint cube_indices[] = {

@@ -2,8 +2,6 @@
 #include <unordered_map>
 #include <algorithm>
 
-GLuint default_texture{0};
-
 struct Submesh {
 	std::string texture{""};
 	GLuint verts_begin{0};
@@ -12,19 +10,7 @@ struct Submesh {
 	GLuint indices_count{0};
 };
 
-void create_default_texture() {
-	stbi_set_flip_vertically_on_load(1);
-	static constexpr GLubyte default_texture_data[] = {
-		255, 255, 255
-	};
-	// this must live for the entire duration of the program, so we dont need to worry about deletion
-	glGenTextures(1, &default_texture);
-	glBindTexture(GL_TEXTURE_2D, default_texture);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 1, 1, 0, GL_RGB, GL_UNSIGNED_BYTE, default_texture_data);
-}
-
 Mesh model_to_mesh(const std::string& model, const std::string& default_override) {
-	if (default_texture == 0) create_default_texture();
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(model, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 	if (scene == nullptr) {
@@ -47,13 +33,15 @@ Mesh model_to_mesh(const std::string& model, const std::string& default_override
 		if (!textures_map.contains(s.texture) && s.texture != "") {
 			textures_map[s.texture] = texture_from_ai(scene, s.texture);
 		}
-		texture_areas.push_back({s.indices_count, textures_map[s.texture]});
+		if (s.texture == "") texture_areas.push_back({s.indices_count, 0});
+		else texture_areas.push_back({s.indices_count, textures_map[s.texture]});
 	};
 
 	return Mesh(verts, indices, texture_areas);
 }
 
 GLuint texture_from_ai(const aiScene *scene, std::string texture_name) {
+	stbi_set_flip_vertically_on_load(1);
 	GLuint* data{nullptr};
 	int width, height, channels;
 	if (const aiTexture* embedded = scene->GetEmbeddedTexture(texture_name.c_str())) {
@@ -71,7 +59,8 @@ GLuint texture_from_ai(const aiScene *scene, std::string texture_name) {
 	if (data == nullptr) {
 		// if image loading failed, use default texture instead
 		std::cout << stbi_failure_reason() << std::endl;
-		return default_texture;
+		// 0 will tell renderer to use default texture
+		return 0;
 	}
 	GLuint gltext{0};
 	glGenTextures(1, &gltext);

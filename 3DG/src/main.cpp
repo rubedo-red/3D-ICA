@@ -17,6 +17,9 @@ int main()
 	if (!window)
 		return -1;
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
+	
+	// Renderer should be created first to establish some global state
+	Renderer renderer = Renderer();
 
 	Mesh m = model_to_mesh("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
 	m.transform = glm::translate(m.transform, {-0.4f, -0.5f, -5.f});
@@ -50,7 +53,6 @@ int main()
 		"Data/Models/Sky/Clouds/SkyBox_Front.tga"
 	);
 
-	Renderer renderer = Renderer();
 	FreeCamera camera;
 
 	double prev_time = glfwGetTime();
@@ -102,6 +104,8 @@ int main()
 		renderer.render_mesh(m3, view_matrix);
 		//renderer.render_mesh(m4, view_matrix);
 		//renderer.render_mesh(m5, view_matrix);
+
+		renderer.render_cube(glm::mat4(1), view_matrix);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
@@ -183,7 +187,6 @@ GLFWwindow* CreateGLFWWindow(int width, int height, const std::string& title)
 
 void DefineGUI()
 {
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 	{
 		ImGui::Begin("3DG");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);

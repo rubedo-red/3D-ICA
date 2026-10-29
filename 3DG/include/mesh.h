@@ -1,11 +1,11 @@
 #pragma once
-#include "Keith_Helpers.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 #include <vector>
 #include <iostream>
 #include <string>
+#include "Keith_Helpers.h"
 
 struct VertexData {
 	GLfloat x{0.f};
@@ -20,7 +20,8 @@ struct VertexData {
 
 class Mesh {
 public:
-	Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<GLsizei, GLuint>>& texture_areas);
+	Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<GLsizei, GLuint>>& areas);
+	Mesh(const VertexData* verts, const GLsizei vert_count, const GLuint* indices, const GLsizei index_count, const std::vector<std::pair<GLsizei, GLuint>>& areas);
 	~Mesh();
 
 	// public since they need to be accessed by the renderer, shouldn't be modified directly unless you really know what you're doing

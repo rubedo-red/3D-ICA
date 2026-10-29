@@ -1,9 +1,20 @@
 #include "mesh.h"
-#include "stb/stb_image.h"
 
 Mesh::Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<GLsizei, GLuint>>& areas) {
 
 	create_buffers(verts.data(), verts.size(), indices.data(), indices.size());
+	texture_areas = areas;
+
+	std::unordered_set<GLuint> unique_textures;
+	for (auto& [count, texture]: texture_areas)
+		if (!unique_textures.contains(texture)) {
+			textures.push_back(texture);
+			unique_textures.emplace(texture);
+	}
+}
+
+Mesh::Mesh(const VertexData* verts, const GLsizei vert_count, const GLuint* indices, const GLsizei index_count, const std::vector<std::pair<GLsizei, GLuint>>& areas) {
+	create_buffers(verts, vert_count, indices, index_count);
 	texture_areas = areas;
 
 	std::unordered_set<GLuint> unique_textures;

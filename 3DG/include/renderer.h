@@ -1,9 +1,8 @@
 #pragma once
-#include "Keith_Helpers.h"
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include "mesh.h"
+#include "Keith_Helpers.h"
 #include "primitives.h"
 #include "skybox.h"
 
@@ -16,6 +15,7 @@ public:
 	void clear();
 	void render_mesh(const Mesh& mesh, const glm::mat4& view_matrix);
 	void render_skybox(const Skybox& skybox, const glm::mat4& view_matrix);
+	void render_cube(const glm::mat4& transform, const glm::mat4& view_matrix);
 	void set_projection(float fov_y, float aspect, float near_dist, float far_dist);
 
 	glm::mat4 projection_matrix{glm::mat4{1.f}};
@@ -28,6 +28,8 @@ private:
 	GLuint skybox_vao{0};
 	GLuint skybox_vbo{0};
 	GLuint skybox_ebo{0};
+
+	Mesh cube_primitive;
 
 	void set_default_flags();
 	void create_mesh_shader();

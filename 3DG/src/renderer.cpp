@@ -3,11 +3,14 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb/stb_image.h"
 
-Renderer::Renderer() {
+Renderer::Renderer() :
+	cube_primitive(cube_data, sizeof(cube_data)/sizeof(VertexData), cube_indices, sizeof(cube_indices)/sizeof(GLuint), {{sizeof(cube_indices)/sizeof(GLuint), 0}})
+{
 	set_default_flags();
 	create_mesh_shader();
 	create_skybox();
 	create_skybox_shader();
+	if (default_texture == 0) create_default_texture();
 	set_projection(glm::radians(50.f), 1.f, 0.01f, 1000.f);
 }
 
@@ -95,18 +98,22 @@ void Renderer::clear() {
 void Renderer::render_mesh(const Mesh& mesh, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
 	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
+	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
 	glm::mat4 trans = projection_matrix * view_matrix * mesh.transform;
+	glm::vec4 color = {1.f, 1.f, 1.f, 1.f};
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
+	glUniform4f(color_loc, color.r, color.g, color.b, color.a);
 	size_t current = 0;
 	glBindVertexArray(mesh.VAO);
 	for (auto& [n, t] : mesh.texture_areas) {
-		glBindTexture(GL_TEXTURE_2D, t);
+		// if no texture, use 1x1 white texture
+		if (t == 0) glBindTexture(GL_TEXTURE_2D, default_texture);
+		else glBindTexture(GL_TEXTURE_2D, t);
 		glDrawElements(GL_TRIANGLES, n, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
 		current += n;
 	}
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
-	
 }
 
 void Renderer::render_skybox(const Skybox& skybox, const glm::mat4& view_matrix) {
@@ -138,4 +145,22 @@ Renderer::~Renderer() {
 	glDeleteBuffers(1, &skybox_vbo);
 	glDeleteBuffers(1, &skybox_ebo);
 	glDeleteVertexArrays(1, &skybox_vao);
+}
+void Renderer::render_cube(const glm::mat4& transform, const glm::mat4& view_matrix) {
+	glUseProgram(mesh_shader);
+	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
+	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
+	glm::mat4 trans = projection_matrix * view_matrix * transform;
+	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
+	size_t current = 0;
+	glBindVertexArray(cube_primitive.VAO);
+	for (size_t i = 0; i < 6; i++) {
+		glBindTexture(GL_TEXTURE_2D, default_texture);
+		glm::vec4 color = primitive_colors[i%(sizeof(primitive_colors)/sizeof(glm::vec4))];
+		glUniform4f(color_loc, color.r, color.g, color.b, color.a);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
+		current += 6;
+	}
+	glBindVertexArray(0);
+	glBindTexture(GL_TEXTURE_2D, 0);
 }

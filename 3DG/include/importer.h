@@ -1,11 +1,9 @@
 #pragma once
 
-#include "mesh.h"
 #include "stb/stb_image.h"
+#include "mesh.h"
 
 struct Submesh;
-
-void create_default_texture();
 
 Mesh model_to_mesh(const std::string& model, const std::string& default_override="");
 
