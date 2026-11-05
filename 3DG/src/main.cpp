@@ -13,6 +13,7 @@ bool viewport_dirty{false};
 float aspect_ratio{1.f};
 
 bool is_wireframe{false};
+bool lighting_enabled{true};
 
 int main()
 {
@@ -33,6 +34,10 @@ int main()
 	m2.transform.translate = {0.f, -0.5f, -5.f};
 	m2.transform.scale = {0.004f, 0.004f, 0.004f};
 
+	Mesh m4 = model_to_mesh("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
+	m4.transform.translate = {-2.f, -0.5f, -3.f};
+	m4.transform.scale = {0.4f, 0.4f, 0.4f};
+
 	Mesh m3 = model_to_mesh("Data/Models/Jeep/jeep.obj", "Data/Models/Jeep/jeep_rood.jpg");
 	m3.transform.translate = {2.5f, 0.2f, -5.f};
 	m3.transform.pitch = 3.14159256f*-1.2f;
@@ -40,8 +45,8 @@ int main()
 	m3.transform.yaw = 3.14159256f*0.5f;
 	m3.transform.scale = {0.004f, 0.004f, 0.004f};
 
-	Mesh terrain = create_terrain_mesh("Data/Heightmaps/perlin.png", 98, 100, 0.2f, 4.f);
-	terrain.transform.translate = {0.f, -6.f, 0.f};
+	Mesh terrain = create_terrain_mesh("Data/Heightmaps/perlin.png", "Data/Textures/grass11.bmp" , 200, 200, 0.5f, 16.f, 0.03f);
+	terrain.transform.translate = {0.f, -12.f, -4.5};
 
 	Transform cube;
 	cube.translate = {0.f, 1.f, -8.f};
@@ -100,7 +105,10 @@ int main()
 		cube.yaw += dt * 0.7f;
 		cube.pitch += dt * 0.2f;
 
+		m4.transform.yaw += dt * -1.f;
+
 		renderer.set_wireframe(is_wireframe);
+		renderer.set_lighting_enable(lighting_enabled);
 
 		renderer.clear();
 	
@@ -108,6 +116,7 @@ int main()
 		renderer.render_mesh(m, view_matrix);
 		renderer.render_mesh(m2, view_matrix);
 		renderer.render_mesh(m3, view_matrix);
+		renderer.render_mesh(m4, view_matrix);
 		renderer.render_mesh(terrain, view_matrix);
 
 		renderer.render_cube(cube, view_matrix);
@@ -195,6 +204,7 @@ void DefineGUI()
 	{
 		ImGui::Begin("3DG");
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+		ImGui::Checkbox("Lighting", &lighting_enabled);
 		ImGui::Checkbox("Wireframe", &is_wireframe);
 		ImGui::End();
 	}

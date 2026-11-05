@@ -18,6 +18,11 @@ void Renderer::set_wireframe(bool enable) {
 	glPolygonMode(GL_FRONT_AND_BACK, enable ? GL_LINE : GL_FILL);
 }
 
+void Renderer::set_lighting_enable(bool enable) {
+	glUseProgram(mesh_shader);
+	glUniform1i(glGetUniformLocation(mesh_shader, "enable_lighting"), enable);
+}
+
 void Renderer::create_skybox() {
 	glGenVertexArrays(1, &skybox_vao);
 	glGenBuffers(1, &skybox_vbo);
@@ -100,11 +105,13 @@ void Renderer::clear() {
 
 void Renderer::render_mesh(const Mesh& mesh, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
-	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
+	GLuint transform_loc = glGetUniformLocation(mesh_shader, "view_transform");
+	GLuint mesh_transform_loc = glGetUniformLocation(mesh_shader, "mesh_transform");
 	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
-	glm::mat4 trans = projection_matrix * view_matrix * mesh.transform.matrix();
+	glm::mat4 trans = projection_matrix * view_matrix;
 	glm::vec4 color = {1.f, 1.f, 1.f, 1.f};
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
+	glUniformMatrix4fv(mesh_transform_loc, 1, GL_FALSE, glm::value_ptr(mesh.transform.matrix()));
 	glUniform4f(color_loc, color.r, color.g, color.b, color.a);
 	size_t current = 0;
 	glBindVertexArray(mesh.VAO);
@@ -151,10 +158,12 @@ Renderer::~Renderer() {
 }
 void Renderer::render_cube(const Transform& transform, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
-	GLuint transform_loc = glGetUniformLocation(mesh_shader, "transform");
+	GLuint transform_loc = glGetUniformLocation(mesh_shader, "view_transform");
+	GLuint mesh_transform_loc = glGetUniformLocation(mesh_shader, "mesh_transform");
 	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
-	glm::mat4 trans = projection_matrix * view_matrix * transform.matrix();
+	glm::mat4 trans = projection_matrix * view_matrix;
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
+	glUniformMatrix4fv(mesh_transform_loc, 1, GL_FALSE, glm::value_ptr(transform.matrix()));
 	size_t current = 0;
 	glBindVertexArray(cube_primitive.VAO);
 	for (size_t i = 0; i < 6; i++) {

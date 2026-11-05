@@ -17,6 +17,11 @@ struct VertexData {
 	GLfloat nz{0.f};
 	GLfloat u{0.f};
 	GLfloat v{0.f};
+
+	glm::vec3 position() {return glm::vec3(x, y, z);}
+	glm::vec3 normal() {return glm::vec3(nx, ny, nz);}
+	void set_position(glm::vec3 pos) {nx=pos.x; ny=pos.y; nz=pos.z;}
+	void set_normal(glm::vec3 norm) {nx=norm.x; ny=norm.y; nz=norm.z;}
 };
 
 class Mesh {

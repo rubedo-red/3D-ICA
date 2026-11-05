@@ -30,15 +30,15 @@ static constexpr GLfloat cube_verts[] = {
 };
 
 static constexpr VertexData cube_data[] = {
-	{-1.f, 1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-	{1.f, 1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-	{-1.f, -1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-	{1.f, -1.f, 1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{-1.f, 1.f, 1.f, -1.f, 1.f, 1.f, 0.f, 0.f},
+	{1.f, 1.f, 1.f, 1.f, 1.f, 1.f, 0.f, 0.f},
+	{-1.f, -1.f, 1.f, -1.f, -1.f, 1.f, 0.f, 0.f},
+	{1.f, -1.f, 1.f, 1.f, -1.f, 1.f, 0.f, 0.f},
 
-	{-1.f, 1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-	{1.f, 1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-	{-1.f, -1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
-	{1.f, -1.f, -1.f, 0.f, 0.f, 0.f, 0.f, 0.f},
+	{-1.f, 1.f, -1.f, -1.f, 1.f, -1.f, 0.f, 0.f},
+	{1.f, 1.f, -1.f, 1.f, 1.f, -1.f, 0.f, 0.f},
+	{-1.f, -1.f, -1.f, -1.f, -1.f, -1.f, 0.f, 0.f},
+	{1.f, -1.f, -1.f, 1.f, -1.f, -1.f, 0.f, 0.f},
 };
 
 static constexpr GLuint cube_indices[] = {
