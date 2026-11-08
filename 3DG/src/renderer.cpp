@@ -11,7 +11,7 @@ Renderer::Renderer() :
 	create_skybox();
 	create_skybox_shader();
 	if (default_texture == 0) create_default_texture();
-	set_projection(glm::radians(50.f), 1.f, 0.01f, 1000.f);
+	set_projection(glm::radians(50.f), 1.f, 0.15f, 1000.f);
 }
 
 void Renderer::set_wireframe(bool enable) {
@@ -20,7 +20,7 @@ void Renderer::set_wireframe(bool enable) {
 
 void Renderer::set_lighting_enable(bool enable) {
 	glUseProgram(mesh_shader);
-	glUniform1i(glGetUniformLocation(mesh_shader, "enable_lighting"), enable);
+	glUniform1i(glGetUniformLocation(mesh_shader, "light_enable"), enable);
 }
 
 void Renderer::create_skybox() {
@@ -106,13 +106,13 @@ void Renderer::clear() {
 void Renderer::render_mesh(const Mesh& mesh, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
 	GLuint transform_loc = glGetUniformLocation(mesh_shader, "view_transform");
-	GLuint mesh_transform_loc = glGetUniformLocation(mesh_shader, "mesh_transform");
-	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
+	GLuint mesh_transform_loc = glGetUniformLocation(mesh_shader, "obj_transform");
+	GLuint color_loc = glGetUniformLocation(mesh_shader, "obj_color");
 	glm::mat4 trans = projection_matrix * view_matrix;
-	glm::vec4 color = {1.f, 1.f, 1.f, 1.f};
+	glm::vec3 color = {1.f, 1.f, 1.f};
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
 	glUniformMatrix4fv(mesh_transform_loc, 1, GL_FALSE, glm::value_ptr(mesh.transform.matrix()));
-	glUniform4f(color_loc, color.r, color.g, color.b, color.a);
+	glUniform3f(color_loc, color.r, color.g, color.b);
 	size_t current = 0;
 	glBindVertexArray(mesh.VAO);
 	for (auto& [n, t] : mesh.texture_areas) {
@@ -156,23 +156,25 @@ Renderer::~Renderer() {
 	glDeleteBuffers(1, &skybox_ebo);
 	glDeleteVertexArrays(1, &skybox_vao);
 }
+
 void Renderer::render_cube(const Transform& transform, const glm::mat4& view_matrix) {
 	glUseProgram(mesh_shader);
 	GLuint transform_loc = glGetUniformLocation(mesh_shader, "view_transform");
-	GLuint mesh_transform_loc = glGetUniformLocation(mesh_shader, "mesh_transform");
-	GLuint color_loc = glGetUniformLocation(mesh_shader, "color");
+	GLuint mesh_transform_loc = glGetUniformLocation(mesh_shader, "obj_transform");
+	GLuint color_loc = glGetUniformLocation(mesh_shader, "obj_color");
 	glm::mat4 trans = projection_matrix * view_matrix;
 	glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
 	glUniformMatrix4fv(mesh_transform_loc, 1, GL_FALSE, glm::value_ptr(transform.matrix()));
-	size_t current = 0;
+	glBindTexture(GL_TEXTURE_2D, default_texture);
 	glBindVertexArray(cube_primitive.VAO);
+	size_t current = 0;
 	for (size_t i = 0; i < 6; i++) {
-		glBindTexture(GL_TEXTURE_2D, default_texture);
-		glm::vec4 color = primitive_colors[i%(sizeof(primitive_colors)/sizeof(glm::vec4))];
-		glUniform4f(color_loc, color.r, color.g, color.b, color.a);
+		glm::vec3 color = primitive_colors[i%(sizeof(primitive_colors)/sizeof(glm::vec3))];
+		glUniform3f(color_loc, color.r, color.g, color.b);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
 		current += 6;
 	}
+	glUniform3f(color_loc, 1.f, 1.f, 1.f);
 	glBindVertexArray(0);
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

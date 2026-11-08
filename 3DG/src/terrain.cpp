@@ -1,17 +1,7 @@
 #include "terrain.h"
 #include "importer.h"
 
-void make_terrain_tri(std::vector<VertexData>& verts, std::vector<GLuint>& indices, GLuint a, GLuint b, GLuint c) {
-	indices.push_back(a);
-	indices.push_back(b);
-	indices.push_back(c);
-	const glm::vec3 edge1 = verts[b].position() - verts[a].position();
-	const glm::vec3 edge2 = verts[c].position() - verts[a].position();
-	const glm::vec3 normal = glm::cross(edge1, edge2);
-	verts[a].set_normal(verts[a].normal() + normal);
-	verts[b].set_normal(verts[b].normal() + normal);
-	verts[c].set_normal(verts[c].normal() + normal);
-}
+void make_terrain_tri(std::vector<VertexData>& verts, std::vector<GLuint>& indices, GLuint a, GLuint b, GLuint c);
 
 Mesh create_terrain_mesh(std::string img_path, std::string texture_path, size_t cells_w, size_t cells_h, GLfloat cell_size, GLfloat height, GLfloat texture_scale) {
 	// dont need flipped image here
@@ -39,18 +29,9 @@ Mesh create_terrain_mesh(std::string img_path, std::string texture_path, size_t 
 	const GLfloat offset_x = (cell_size*static_cast<float>(cells_w))/2.f;
 	const GLfloat offset_y = (cell_size*static_cast<float>(cells_h))/2.f;
 
-	std::vector<VertexData> verts(verts_w*verts_h, {
-		.x = 0.f,
-		.y = 0.f,
-		.z = 0.f,
-		.nx = 0.f,
-		.ny = 0.f,
-		.nz = 0.f,
-		.u = 0.f,
-		.v = 0.f
-	});
+	std::vector<VertexData> verts;
 	std::vector<GLuint> indices;
-
+	verts.reserve(verts_w*verts_h);
 	indices.reserve(cells_w*cells_h*6);
 	
 	const GLfloat img_scale_w =  static_cast<GLfloat>(noise_img.width)/static_cast<GLfloat>(verts_w);
@@ -60,14 +41,16 @@ Mesh create_terrain_mesh(std::string img_path, std::string texture_path, size_t 
 		const size_t img_x = static_cast<size_t>(static_cast<float>(i%verts_w)*img_scale_w);
 		const size_t img_y = static_cast<size_t>(static_cast<float>(i/verts_w)*img_scale_h);
 		const GLfloat noise_val = static_cast<GLfloat>(noise_img.data[4*(img_y*noise_img.width+img_x)])/255.f;
-		verts[i] = {
-			.x = static_cast<GLfloat>(i%verts_w)*cell_size - offset_x,
-			.y = noise_val * height,
-			.z = static_cast<GLfloat>(i/verts_w)*cell_size - offset_y,
-			.u = static_cast<GLfloat>(i%verts_w)/static_cast<GLfloat>(verts_w)*(1.f/texture_scale),
-			.v = static_cast<GLfloat>(i/verts_w)/static_cast<GLfloat>(verts_h)*(1.f/texture_scale)
-		};
-
+		verts.emplace_back(
+			static_cast<GLfloat>(i%verts_w)*cell_size - offset_x,
+			noise_val * height,
+			static_cast<GLfloat>(i/verts_w)*cell_size - offset_y,
+			0.f,
+			0.f,
+			0.f,
+			static_cast<GLfloat>(i%verts_w)/static_cast<GLfloat>(verts_w)*(1.f/texture_scale),
+			static_cast<GLfloat>(i/verts_w)/static_cast<GLfloat>(verts_h)*(1.f/texture_scale)
+		);
 	}
 
 	for (size_t i = 0; i < verts_w*verts_h; i++) {
@@ -80,10 +63,21 @@ Mesh create_terrain_mesh(std::string img_path, std::string texture_path, size_t 
 				make_terrain_tri(verts, indices, i, i+verts_w+1, i+1);
 			}
 		}
+		verts[i].set_normal(glm::normalize(verts[i].normal()));
 	}
-
-	for (auto& vert : verts)
-		vert.set_normal(glm::normalize(vert.normal()));
 
 	return Mesh{verts, indices, {{indices.size(), texture}}};
 }
+
+void make_terrain_tri(std::vector<VertexData>& verts, std::vector<GLuint>& indices, GLuint a, GLuint b, GLuint c) {
+	indices.push_back(a);
+	indices.push_back(b);
+	indices.push_back(c);
+	const glm::vec3 edge1 = verts[b].position() - verts[a].position();
+	const glm::vec3 edge2 = verts[c].position() - verts[a].position();
+	const glm::vec3 normal = glm::cross(edge1, edge2);
+	verts[a].set_normal(verts[a].normal() + normal);
+	verts[b].set_normal(verts[b].normal() + normal);
+	verts[c].set_normal(verts[c].normal() + normal);
+}
+

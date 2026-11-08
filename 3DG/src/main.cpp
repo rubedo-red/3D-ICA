@@ -22,9 +22,6 @@ int main()
 		return -1;
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 	
-	// Renderer should be created first to establish some global state
-	Renderer renderer = Renderer();
-
 	Mesh m = model_to_mesh("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
 	m.transform.translate = {-0.4f, -0.5f, -5.f};
 	m.transform.yaw = 3.14159256f*1.5f;
@@ -34,9 +31,8 @@ int main()
 	m2.transform.translate = {0.f, -0.5f, -5.f};
 	m2.transform.scale = {0.004f, 0.004f, 0.004f};
 
-	Mesh m4 = model_to_mesh("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
+	Mesh m4 = model_to_mesh("Data/Models/Test/koishi.glb");
 	m4.transform.translate = {-2.f, -0.5f, -3.f};
-	m4.transform.scale = {0.4f, 0.4f, 0.4f};
 
 	Mesh m3 = model_to_mesh("Data/Models/Jeep/jeep.obj", "Data/Models/Jeep/jeep_rood.jpg");
 	m3.transform.translate = {2.5f, 0.2f, -5.f};
@@ -62,6 +58,8 @@ int main()
 	);
 
 	FreeCamera camera;
+
+	Renderer renderer = Renderer();
 
 	double prev_time = glfwGetTime();
 	while (!glfwWindowShouldClose(window))
@@ -97,7 +95,7 @@ int main()
 			camera.move_up(true, dt);
 
 		if (viewport_dirty) {
-			renderer.set_projection(glm::radians(50.f), aspect_ratio, 0.01f, 1000.f);
+			renderer.set_projection(glm::radians(50.f), aspect_ratio, 0.15f, 1000.f);
 			viewport_dirty = false;
 		}
 		const glm::mat4 view_matrix = camera.camera.calculate_view_matrix();
