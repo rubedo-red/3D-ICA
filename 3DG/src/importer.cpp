@@ -2,49 +2,147 @@
 #include <unordered_map>
 #include <algorithm>
 
-struct Submesh {
-	std::string texture{""};
-	GLuint verts_begin{0};
-	GLuint indices_begin{0};
-	GLuint verts_count{0};
-	GLuint indices_count{0};
-};
+glm::mat4 ai_mat4_to_glm(aiMatrix4x4t<float> mat) {
+	glm::mat4 new_mat;
+	new_mat[0][0] = mat.a1; new_mat[1][0] = mat.a2; new_mat[2][0] = mat.a3; new_mat[3][0] = mat.a4;
+	new_mat[0][1] = mat.b1; new_mat[1][1] = mat.b2; new_mat[2][1] = mat.b3; new_mat[3][1] = mat.b4;
+	new_mat[0][2] = mat.c1; new_mat[1][2] = mat.c2; new_mat[2][2] = mat.c3; new_mat[3][2] = mat.c4;
+	new_mat[0][3] = mat.d1; new_mat[1][3] = mat.d2; new_mat[2][3] = mat.d3; new_mat[3][3] = mat.d4;
+	return new_mat;
+}
 
-Mesh model_to_mesh(const std::string& model, const std::string& default_override) {
+Image load_image(const std::string& path) {
+	uint8_t* data;
+	int width, height, channels;
+	data = (uint8_t*)stbi_load(path.c_str(), &width, &height, &channels, 4);
+	return {
+		.width = static_cast<size_t>(width),
+		.height = static_cast<size_t>(height),
+		.data = data
+	};
+}
+
+Image::~Image() {
+	stbi_image_free(data);
+}
+
+Mesh model_to_mesh(const std::string& model) {
+	std::cerr << "loading model: " << model << std::endl;
+	std::filesystem::path model_path(model);
+	if (!std::filesystem::exists(model)) {
+		// TODO: add code to return a builtin placeholder/error model
+	};
+	
+
 	Assimp::Importer importer;
 	const aiScene* scene = importer.ReadFile(model, aiProcess_Triangulate | aiProcess_JoinIdenticalVertices);
 	if (scene == nullptr) {
 		std::cout << "assimp error: " << importer.GetErrorString() << std::endl;
 	};
 
+
 	aiMatrix4x4 trans;
-	std::vector<Submesh> submeshes;
+	std::vector<Material> materials;
+	materials.reserve(scene->mNumMaterials);
+	std::vector<SubmeshInfo> submeshes;
+	submeshes.reserve(scene->mNumMeshes);
 	std::vector<VertexData> verts;
 	std::vector<GLuint> indices;
-	visit_ai_node(scene, scene->mRootNode, submeshes, verts, indices, trans);
 
-	std::unordered_map<std::string, GLuint> textures_map;
-	std::vector<std::pair<GLsizei, GLuint>> texture_areas;
 
-	const bool has_override = default_override != "";
-	for (auto& s : submeshes) { 
-		if (has_override && s.texture == "") 
-			s.texture = default_override; 
-		if (!textures_map.contains(s.texture) && s.texture != "") {
-			textures_map[s.texture] = texture_from_ai(scene, s.texture);
+	for (size_t i{0}; i < scene->mNumMaterials; i++) {
+		auto& asset_material = *scene->mMaterials[i];
+		aiColor3D diffuse;
+		aiColor3D specular;
+		if (AI_SUCCESS != asset_material.Get(AI_MATKEY_COLOR_DIFFUSE, diffuse)) diffuse = {1.f, 1.f, 1.f};
+		if (AI_SUCCESS != asset_material.Get(AI_MATKEY_COLOR_SPECULAR, specular)) specular = {0.4f, 0.4f, 0.4f}; 
+		
+		aiString diffuse_texture_path;
+		aiString specular_texture_path;
+		aiString normal_texture_path;
+		GLuint diffuse_texture{0};
+		GLuint specular_texture{0};
+		GLuint normal_texture{0};
+
+		std::filesystem::path parent_path = model_path.parent_path();
+
+		if (AI_SUCCESS == asset_material.GetTexture(
+			aiTextureType_DIFFUSE, 
+			0,
+			&diffuse_texture_path,
+			NULL, NULL, NULL, NULL, NULL // we don't care about these ( for now )
+		)) {
+			diffuse_texture = texture_from_ai(scene, diffuse_texture_path.C_Str(), parent_path);
 		}
-		if (s.texture == "") texture_areas.push_back({s.indices_count, 0});
-		else texture_areas.push_back({s.indices_count, textures_map[s.texture]});
-	};
+		if (AI_SUCCESS == asset_material.GetTexture(
+			aiTextureType_SPECULAR, 
+			0,
+			&specular_texture_path,
+			NULL, NULL, NULL, NULL, NULL
+		)) {
+			specular_texture = texture_from_ai(scene, specular_texture_path.C_Str(), parent_path);
+		}
+		if (AI_SUCCESS == asset_material.GetTexture(
+			aiTextureType_NORMALS, 
+			0,
+			&normal_texture_path,
+			NULL, NULL, NULL, NULL, NULL
+		)) {
+			normal_texture = texture_from_ai(scene, normal_texture_path.C_Str(), parent_path);
+		}
 
-	return Mesh(verts, indices, texture_areas);
+		Material material = {
+			.specular = std::max(std::max(specular.r, specular.g), specular.b),
+			.diffuse = { diffuse.r, diffuse.g, diffuse.b },
+			.diffuse_texture = diffuse_texture,
+			.specular_texture = specular_texture,
+			.normal_texture = normal_texture
+		};
+
+		materials.push_back(material);
+	}
+	for (size_t i{0}; i < scene->mNumMeshes; i++) {
+		SubmeshInfo mesh_info;
+		const auto& mesh = *scene->mMeshes[i];
+		mesh_info.start_index = indices.size();
+		mesh_info.material = materials[mesh.mMaterialIndex];
+		for (size_t f{0}; f < mesh.mNumFaces; f++) {
+			const auto& face = mesh.mFaces[f];
+			for (size_t ind{0}; ind<face.mNumIndices; ind++) {
+				indices.push_back(verts.size() + face.mIndices[ind]);
+				mesh_info.element_count++;
+			}
+		}
+		for (size_t v{0}; v < mesh.mNumVertices; v++) {
+			const auto& vert = mesh.mVertices[v];
+			const auto& norm = mesh.mNormals[v];
+			aiVector3D uv(0.f, 0.f, 0.f);
+			if (mesh.GetNumUVChannels() > 0) uv = mesh.mTextureCoords[0][v];
+			verts.push_back(VertexData{
+				.x  = vert.x,
+				.y  = vert.y,
+				.z  = vert.z,
+				.nx = norm.x,
+				.ny = norm.y,
+				.nz = norm.z,
+				.u  = uv.x,
+				.v  = uv.y,
+			});
+		}
+		submeshes.push_back(mesh_info);
+	}
+
+	std::vector<SubmeshInfo> parts;
+	visit_ai_node(scene->mRootNode, submeshes, parts);
+
+	return Mesh(verts, indices, parts);
 }
 
-GLuint texture_from_ai(const aiScene *scene, std::string texture_name) {
+GLuint texture_from_ai(const aiScene *scene, std::filesystem::path texture_path, std::filesystem::path parent_path) {
 	stbi_set_flip_vertically_on_load(1);
 	GLuint* data{nullptr};
 	int width, height, channels;
-	if (const aiTexture* embedded = scene->GetEmbeddedTexture(texture_name.c_str())) {
+	if (const aiTexture* embedded = scene->GetEmbeddedTexture(texture_path.c_str())) {
 		// if height is 0, embedded texture needs to be decoded
 		if (embedded->mHeight == 0) 
 			data = (GLuint*)stbi_load_from_memory((GLubyte*)embedded->pcData, embedded->mWidth, &width, &height, &channels, 4);
@@ -54,7 +152,8 @@ GLuint texture_from_ai(const aiScene *scene, std::string texture_name) {
 			height = embedded->mHeight;
 		}
 	} else {
-		data = (GLuint*)stbi_load(texture_name.c_str(), &width, &height, &channels, 4);
+		if (!std::filesystem::exists(parent_path/texture_path)) return 0;
+		data = (GLuint*)stbi_load((parent_path/texture_path).c_str(), &width, &height, &channels, 4);
 	}
 	if (data == nullptr) {
 		// if image loading failed, use default texture instead
@@ -72,69 +171,14 @@ GLuint texture_from_ai(const aiScene *scene, std::string texture_name) {
 	return gltext;
 }
 
-void visit_ai_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans) {
-	aiMatrix4x4 trans = p_trans * node->mTransformation;
+void visit_ai_node(aiNode *node, std::vector<SubmeshInfo>& unique_meshes, std::vector<SubmeshInfo>& parts, glm::mat4 p_trans) {
+	glm::mat4 trans = p_trans * ai_mat4_to_glm(node->mTransformation);
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
-		GLuint base_vert = static_cast<GLsizei>(vertices.size());
-		GLuint next_base = base_vert;
-		Submesh s;
-		s.verts_begin = static_cast<GLuint>(vertices.size());
-		s.indices_begin = static_cast<GLuint>(indices.size());
-		aiMesh *m = scene->mMeshes[node->mMeshes[i]];
-		aiMaterial* material = scene->mMaterials[m->mMaterialIndex];
-		const bool has_text_coords = m->HasTextureCoords(0);
-		const size_t t_count = material->GetTextureCount(aiTextureType_BASE_COLOR);
-		if (t_count > 0) {
-			aiString path;
-			material->GetTexture(aiTextureType_BASE_COLOR, 0, &path);
-			s.texture = std::string(path.C_Str());
-		} 
-		for (size_t j = 0; j < m->mNumVertices; j++) {
-			next_base++;
-			VertexData v_data;
-			aiVector3D v = trans * (m->mVertices[j]);
-			aiVector3D n = trans * (m->mNormals[j]);
-			v_data.x = v.x;
-			v_data.y = v.y;
-			v_data.z = v.z;
-			v_data.nx = n.x;
-			v_data.ny = n.y;
-			v_data.nz = n.z;
-			if (has_text_coords) {
-				aiVector3D t = (m->mTextureCoords[0][j]);
-				v_data.u = t.x;
-				v_data.v = t.y;
-			}
-			vertices.push_back(v_data);
-		}
-		s.verts_count = next_base;
-		for (size_t j = 0; j < m->mNumFaces; j++) {
-			aiFace face = m->mFaces[j];
-			for (size_t ind = 0; ind < face.mNumIndices; ind++) {
-				s.indices_count++;
-				indices.push_back(face.mIndices[ind]+base_vert);
-			}
-		}
-		base_vert = next_base;
-		submeshes.push_back(s);
+		SubmeshInfo m = unique_meshes[node->mMeshes[i]];
+		m.transform = trans;
+		parts.push_back(m);
 	}
 	for (size_t i = 0; i < node->mNumChildren; i++) {
-		visit_ai_node(scene, node->mChildren[i], submeshes, vertices, indices, trans);
+		visit_ai_node(node->mChildren[i], unique_meshes, parts, trans);
 	}
-}
-
-Image load_image(std::string path) {
-	int width{0};
-	int height{0};
-	int channels{0};
-	uint8_t* data = (uint8_t*)stbi_load(path.c_str(), &width, &height, &channels, 4);
-	return {
-		.width = static_cast<size_t>(width),
-		.height = static_cast<size_t>(height),
-		.data = data
-	};
-}
-
-Image::~Image() {
-	if (data != nullptr) stbi_image_free(data);
 }

@@ -66,7 +66,15 @@ Mesh create_terrain_mesh(std::string img_path, std::string texture_path, size_t 
 		verts[i].set_normal(glm::normalize(verts[i].normal()));
 	}
 
-	return Mesh{verts, indices, {{indices.size(), texture}}};
+	Material mat = {
+		.specular = 0.f,
+		.diffuse_texture = texture
+	};
+	
+	return Mesh{verts, indices, {{
+		.element_count = static_cast<GLsizei>(indices.size()),
+		.material = mat
+	}}};
 }
 
 void make_terrain_tri(std::vector<VertexData>& verts, std::vector<GLuint>& indices, GLuint a, GLuint b, GLuint c) {

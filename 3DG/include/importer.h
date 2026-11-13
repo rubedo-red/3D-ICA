@@ -1,16 +1,17 @@
 #pragma once
 
+
 #include "stb/stb_image.h"
 #include "mesh.h"
 
-struct Submesh;
+#include <filesystem>
 
-Mesh model_to_mesh(const std::string& model, const std::string& default_override="");
+Mesh model_to_mesh(const std::string& model);
 
 // caller is resposible for ownership of returned texture
-GLuint texture_from_ai(const aiScene *scene, std::string texture_name);
+GLuint texture_from_ai(const aiScene *scene, std::filesystem::path texture_path, std::filesystem::path parent_path);
 
-void visit_ai_node(const aiScene *scene, aiNode *node, std::vector<Submesh>& submeshes, std::vector<VertexData>& vertices, std::vector<GLuint>& indices, aiMatrix4x4& p_trans);
+void visit_ai_node(aiNode *node, std::vector<SubmeshInfo>& unique_meshes, std::vector<SubmeshInfo>& parts, glm::mat4 p_trans=glm::mat4(1.f));
 
 struct Image {
 	~Image();
@@ -19,4 +20,4 @@ struct Image {
 	uint8_t* data{nullptr};
 };
 
-Image load_image(std::string path);
+Image load_image(const std::string& path);

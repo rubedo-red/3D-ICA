@@ -24,17 +24,32 @@ struct VertexData {
 	void set_normal(glm::vec3 norm) {nx=norm.x; ny=norm.y; nz=norm.z;}
 };
 
+struct Material {
+	GLfloat specular{1.f};
+	glm::vec3 diffuse{1.f, 1.f, 1.f};
+	GLuint diffuse_texture{0};
+	GLuint specular_texture{0};
+	GLuint normal_texture{0};
+};
+
+struct SubmeshInfo {
+	GLsizei element_count{0};
+	GLsizei start_index{0};
+	Material material{};
+	glm::mat4 transform{glm::mat4(1.f)};
+};
+
 class Mesh {
 public:
-	Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<GLsizei, GLuint>>& areas);
-	Mesh(const VertexData* verts, const GLsizei vert_count, const GLuint* indices, const GLsizei index_count, const std::vector<std::pair<GLsizei, GLuint>>& areas);
+	Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<SubmeshInfo>& sms);
+	Mesh(const VertexData* verts, const GLsizei vert_count, const GLuint* indices, const GLsizei index_count, const std::vector<SubmeshInfo>& sms);
 	~Mesh();
 
 	// public since they need to be accessed by the renderer, shouldn't be modified directly unless you really know what you're doing
 	GLuint VAO{0};
 	Transform transform;
 
-	std::vector<std::pair<GLsizei, GLuint>> texture_areas;
+	std::vector<SubmeshInfo> submeshes;
 
 private:
 	GLuint VBO{0};

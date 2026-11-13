@@ -1,34 +1,22 @@
 #include "mesh.h"
 
-Mesh::Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<std::pair<GLsizei, GLuint>>& areas) {
-
+Mesh::Mesh(const std::vector<VertexData>& verts, const std::vector<GLuint>& indices, const std::vector<SubmeshInfo>& sms) {
 	create_buffers(verts.data(), verts.size(), indices.data(), indices.size());
-	texture_areas = areas;
-
-	std::unordered_set<GLuint> unique_textures;
-	for (auto& [count, texture]: texture_areas)
-		if (!unique_textures.contains(texture)) {
-			textures.push_back(texture);
-			unique_textures.emplace(texture);
-	}
+	submeshes = sms;
 }
 
-Mesh::Mesh(const VertexData* verts, const GLsizei vert_count, const GLuint* indices, const GLsizei index_count, const std::vector<std::pair<GLsizei, GLuint>>& areas) {
+Mesh::Mesh(const VertexData* verts, const GLsizei vert_count, const GLuint* indices, const GLsizei index_count, const std::vector<SubmeshInfo>& sms) {
 	create_buffers(verts, vert_count, indices, index_count);
-	texture_areas = areas;
-
-	std::unordered_set<GLuint> unique_textures;
-	for (auto& [count, texture]: texture_areas)
-		if (!unique_textures.contains(texture)) {
-			textures.push_back(texture);
-			unique_textures.emplace(texture);
-	}
+	submeshes = sms;
 }
 
 Mesh::~Mesh() {
 	glDeleteBuffers(1, &VBO);
 	glDeleteBuffers(1, &EBO);
 	glDeleteVertexArrays(1, &VAO);
+	for (auto& sm: submeshes) {
+		glDeleteTextures(3, &sm.material.diffuse_texture);
+	}
 	glDeleteTextures(static_cast<GLsizei>(textures.size()), textures.data());
 }
 

@@ -22,19 +22,19 @@ int main()
 		return -1;
 	glfwSetInputMode(window, GLFW_STICKY_KEYS, GLFW_TRUE);
 	
-	Mesh m = model_to_mesh("Data/Models/Mummy/mummy.x", "Data/Models/Mummy/mummy.bmp");
+	Mesh m = model_to_mesh("Data/Models/Mummy/mummy.x");
 	m.transform.translate = {-0.4f, -0.5f, -5.f};
 	m.transform.yaw = 3.14159256f*1.5f;
 	m.transform.scale = {0.4f, 0.4f, 0.4f};
 
-	Mesh m2 = model_to_mesh("Data/Models/Jeep/jeep.obj", "Data/Models/Jeep/jeep_army.jpg");
+	Mesh m2 = model_to_mesh("Data/Models/Jeep/jeep.obj");
 	m2.transform.translate = {0.f, -0.5f, -5.f};
 	m2.transform.scale = {0.004f, 0.004f, 0.004f};
 
-	Mesh m4 = model_to_mesh("Data/Models/Test/koishi.glb");
-	m4.transform.translate = {-2.f, -0.5f, -3.f};
+	Mesh m4 = model_to_mesh("Data/Models/Sphere/sphere.obj");
+	m4.transform.translate = {-2.5f, 0.5f, -4.f};
 
-	Mesh m3 = model_to_mesh("Data/Models/Jeep/jeep.obj", "Data/Models/Jeep/jeep_rood.jpg");
+	Mesh m3 = model_to_mesh("Data/Models/Jeep/jeep.obj");
 	m3.transform.translate = {2.5f, 0.2f, -5.f};
 	m3.transform.pitch = 3.14159256f*-1.2f;
 	m3.transform.roll = 3.14159256f*0.5f;
@@ -209,6 +209,8 @@ void DefineGUI()
 }
 
 void resize_window(GLFWwindow* window, int width, int height) {
+	// so the compiler doesnt complain
+	(void)window;
 	glViewport(0, 0, width, height);
 	aspect_ratio = (float)width / (float)height;
 	viewport_dirty = true;
