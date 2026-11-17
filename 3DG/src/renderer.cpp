@@ -4,9 +4,7 @@
 #include "stb/stb_image.h"
 
 Renderer::Renderer() :
-	cube_primitive(cube_data, sizeof(cube_data)/sizeof(VertexData), cube_indices, sizeof(cube_indices)/sizeof(GLuint), {{
-		.element_count = sizeof(cube_indices)/sizeof(GLuint)
-	}})
+  cube_primitive(cube_data, sizeof(cube_data)/sizeof(VertexData), cube_indices, sizeof(cube_indices)/sizeof(GLuint), cube_primitive_submeshes())
 {
 	set_default_flags();
 	create_mesh_shader();
@@ -160,25 +158,6 @@ Renderer::~Renderer() {
 }
 
 void Renderer::render_cube(const Transform& transform, const glm::mat4& view_matrix) {
-	//glUseProgram(mesh_shader);
-	//GLuint transform_loc = glGetUniformLocation(mesh_shader, "view_transform");
-	//GLuint mesh_transform_loc = glGetUniformLocation(mesh_shader, "obj_transform");
-	//GLuint color_loc = glGetUniformLocation(mesh_shader, "obj_color");
-	//GLuint view_pos_loc = glGetUniformLocation(mesh_shader, "view_pos");
-	//glm::mat4 trans = projection_matrix * view_matrix;
-	//glUniform3f(view_pos_loc, trans[3][0], trans[3][1], trans[3][2]);
-	//glUniformMatrix4fv(transform_loc, 1, GL_FALSE, glm::value_ptr(trans));
-	//glUniformMatrix4fv(mesh_transform_loc, 1, GL_FALSE, glm::value_ptr(transform.matrix()));
-	//glBindTexture(GL_TEXTURE_2D, default_texture);
-	//glBindVertexArray(cube_primitive.VAO);
-	//size_t current = 0;
-	//for (size_t i = 0; i < 6; i++) {
-	//	glm::vec3 color = primitive_colors[i%(sizeof(primitive_colors)/sizeof(glm::vec3))];
-	//	glUniform3f(color_loc, color.r, color.g, color.b);
-	//	glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, (void*)(current*sizeof(GLuint)));
-	//	current += 6;
-	//}
-	//glUniform3f(color_loc, 1.f, 1.f, 1.f);
-	//glBindVertexArray(0);
-	//glBindTexture(GL_TEXTURE_2D, 0);
+	cube_primitive.transform = transform;
+	render_mesh(cube_primitive, view_matrix);
 }

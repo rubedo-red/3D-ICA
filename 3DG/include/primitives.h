@@ -6,6 +6,8 @@ inline GLuint default_texture{0};
 
 void create_default_texture();
 
+std::vector<SubmeshInfo> cube_primitive_submeshes();
+
 static constexpr glm::vec3 primitive_colors[] = {
 	{1.f, 1.f, 1.f},
 	{1.f, 0.f, 0.f},

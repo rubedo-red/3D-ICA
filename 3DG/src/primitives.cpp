@@ -1,5 +1,22 @@
 #include "primitives.h"
 
+std::vector<SubmeshInfo> cube_primitive_submeshes() {
+	std::vector<SubmeshInfo> result;
+	for (size_t i = 0; i < 6; i++) {
+		Material mat = {
+			.specular = 0.5f,
+			.diffuse = primitive_colors[i%(sizeof(primitive_colors)/sizeof(glm::vec3))]
+		};
+		SubmeshInfo sm = {
+			.element_count = 6,
+			.start_index = 6*i,
+			.material = mat
+		};
+		result.push_back(sm);
+	}
+	return result;
+}
+
 void create_default_texture() {
 	static constexpr GLubyte default_texture_data[] = {
 		255, 255, 255
